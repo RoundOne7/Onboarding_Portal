@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Doctor Onboarding Portal
 
-## Getting Started
+A polished onboarding dashboard for hospital operations teams to manage doctors, hospitals, schedules, and appointment capacity using a modern Next.js stack.
 
-First, run the development server:
+## What it does
+
+This portal streamlines the medical onboarding lifecycle by giving hospital admins a centralized interface to:
+
+- manage doctor profiles and schedules
+- register new hospitals and connect resources
+- configure appointment slot availability
+- maintain operational settings for the platform
+
+The design focuses on a clean administrative experience with reusable UI components and fast data access via Supabase.
+
+## Why it matters
+
+Healthcare administration workflows often rely on spreadsheets and disconnected tools. This project illustrates a more maintainable onboarding solution for staffing teams and operations managers, enabling faster doctor activation and better hospital coordination.
+
+## Core Features
+
+- Dashboard landing page with quick access to doctors, hospitals, and settings
+- Doctor directory with add/edit workflow and nested schedule/slot navigation
+- Hospital registry with add hospital flow
+- Dedicated settings page for global configuration
+- Supabase-backed data layer for persistence and integration
+- Type-safe forms using `react-hook-form` with `zod` validation
+- Responsive layout optimized for admin use
+
+## Pages and Routes
+
+- `/dashboard` — main dashboard overview
+- `/doctors` — doctor listings
+- `/doctors/add` — add new doctor form
+- `/doctors/[id]/schedule` — doctor schedule detail page
+- `/doctors/[id]/slots` — doctor appointment slot detail page
+- `/hospitals` — hospital listing page
+- `/hospitals/add` — register a new hospital
+- `/settings` — application settings and configuration
+
+## Architecture
+
+- `app/` — Next.js App Router pages and route structure
+- `components/` — reusable UI elements for layout, forms, and data lists
+- `src/lib/supabase.ts` — Supabase client initialization
+- `services/` — business logic and API helper functions
+- `hooks/` — shared React hooks for state and behavior
+- `public/` — static assets
+- `src/app/globals.css` — global styling and Tailwind configuration
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- Supabase JavaScript SDK
+- react-hook-form
+- zod
+- lucide-react
+- clsx
+
+## Setup
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Add environment variables
+
+Create a `.env.local` file with:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+3. Start development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Navigate to `http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Required values:
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+These are consumed in `src/lib/supabase.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+- `npm run dev` — start development server
+- `npm run build` — compile the app for production
+- `npm run start` — start the production server
+- `npm run lint` — run linting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy on any Next.js host such as Vercel, Netlify, or a custom container.
+
+
+## Future Improvements
+
+- add user authentication and role-based access control
+- connect real Supabase tables and row-level security policies
+- add doctor availability calendar and appointment booking flows
+- support hospital-level settings and multi-tenant workflows
+
+## Notes
+
+- The project is currently configured as a private repository in `package.json`.
+
