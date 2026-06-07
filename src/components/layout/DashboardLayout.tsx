@@ -23,7 +23,7 @@ export default function DashboardLayout({
         ml-64
         flex-1
         min-h-screen
-        bg-gray-100
+        bg-linear-to-b from-gray-600 to-white
       '>
 
                 <Header />

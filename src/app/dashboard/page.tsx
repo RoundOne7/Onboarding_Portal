@@ -10,20 +10,23 @@ export default function DashboardPage() {
 
         <DashboardLayout>
 
-            <div>
+            <div className='
+             bg-linear-to-b from-white/0.5 to-white/3
+            '>
 
                 <h1
                     className='
                         text-4xl
                         font-bold
                         mb-4
+                        text-white
                     '>
 
                     Dashboard
 
                 </h1>
 
-                <p>
+                <p className='text-white text-lg'>
 
                     Welcome to the
                     Doctor Onboarding Portal

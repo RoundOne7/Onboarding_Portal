@@ -30,7 +30,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         rounded-3xl
         border
         border-white/10
-        bg-gray-700/90
+        bg-gray-800/50
         backdrop-blur-2xl
         p-6
         shadow-2xl
@@ -53,7 +53,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
           group-hover:opacity-100
           transition-opacity
           duration-500
-          bg-linear-to-b from-blue-500/40 via-gray-700/90 to-blue-500/50
+          bg-linear-to-b from-white/5 via-gray-700/90 to-white/5
         "
       />
 

@@ -16,8 +16,7 @@ export default function Header() {
         <header
             className='
       h-20
-      bg-white
-      border-b
+      bg-linear-to-b from-gray-600/60 to-gray-500/10
       flex
       items-center
       justify-between
@@ -26,11 +25,12 @@ export default function Header() {
 
             <h2
                 className='
-        text-2xl
+        text-3xl
         font-bold
+        text-white
       '>
 
-                Doctor Onboarding Portal
+                Doctor's Onboarding Portal
 
             </h2>
 
@@ -44,6 +44,9 @@ export default function Header() {
         px-5
         py-2
         rounded-xl
+        transition-all
+        duration-200
+        hover:scale-110
       '
             >
 
