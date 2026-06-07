@@ -1,3 +1,4 @@
+// CODE ONLY ACCESS THE EXISTING USER AND DON'T TAKE LOGIN OF NEW USERS.
 'use client'
 
 import { useState } from 'react'
@@ -78,17 +79,24 @@ export default function LoginPage() {
       flex
       items-center
       justify-center
-      bg-gray-100
+      bg-linear-to-br from-gray-600 via-gray-400 to-gray-600
     '>
 
             <div
                 className='
-        bg-white
+        bg-gray-200/80
         p-10
         rounded-2xl
         w-full
         max-w-md
-        shadow-lg
+        shadow-gray-100
+        shadow-3xl
+        hover:shadow-gray-300
+        hover:shadow-4xl
+        hover:scale-110
+        hover:bg-gray-200/90
+        transition
+        duration-300
       '>
 
                 <h1
@@ -119,6 +127,9 @@ export default function LoginPage() {
           p-4
           rounded-xl
           mb-4
+          hover:scale-105
+          transition
+          duration-200
         '
                 />
 
@@ -138,6 +149,9 @@ export default function LoginPage() {
           p-4
           rounded-xl
           mb-6
+          hover:scale-105
+          transition
+          duration-200
         '
                 />
 
@@ -149,11 +163,14 @@ export default function LoginPage() {
 
                     className='
           w-full
-          bg-black
+          bg-gray-800/90
           text-white
           p-4
           rounded-xl
           font-semibold
+          hover:scale-115
+          transition
+          duration-300
         '
                 >
 
@@ -170,3 +187,4 @@ export default function LoginPage() {
         </main>
     )
 }
+
