@@ -46,7 +46,7 @@ export default function DashboardPage() {
             <h1 className='text-3xl font-bold flex items-center gap-2'>
               Welcome back, Admin <span className="text-2xl">👋</span>
             </h1>
-            <p className='text-gray-500 mt-1'>Here is what's happening with doctor onboarding today.</p>
+            <p className='text-gray-500 mt-1'>Monitor doctor registrations, hospital onboarding status, and platform activity in real time.</p>
           </div>
 
           <div className='flex items-center gap-4'>
