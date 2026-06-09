@@ -21,7 +21,7 @@ export default function AddDoctorPage() {
 
     const [qualifications,
         setQualifications]
-        = useState([])
+        = useState<any[]>([])
 
     const [experienceYears,
         setExperienceYears]
@@ -41,11 +41,11 @@ export default function AddDoctorPage() {
 
     const [hospitals,
         setHospitals]
-        = useState([])
+        = useState<any[]>([])
 
     const [specializations,
         setSpecializations]
-        = useState([])
+        = useState<any[]>([])
 
     const [loading, setLoading]
         = useState(false)
@@ -71,7 +71,7 @@ export default function AddDoctorPage() {
 
         if (data) {
 
-            setHospitals(data)
+            setHospitals(data as any[])
         }
     }
 
@@ -86,7 +86,7 @@ export default function AddDoctorPage() {
 
         if (data) {
 
-            setQualifications(data)
+            setQualifications(data as any[])
         }
     }
 
@@ -101,7 +101,7 @@ export default function AddDoctorPage() {
 
         if (data) {
 
-            setSpecializations(data)
+            setSpecializations(data as any[])
         }
     }
 
