@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
 import { FaSearch, FaBell, FaUserMd, FaHospital, FaCalendarCheck, FaCheckCircle, FaClock } from 'react-icons/fa'
-import { FaKitMedical } from 'react-icons/fa6'
+import { FaGears, FaKitMedical } from 'react-icons/fa6'
 
 export default function DashboardPage() {
   // --- STATE FOR DYNAMIC DATA ---
@@ -183,10 +183,12 @@ export default function DashboardPage() {
             
             <div className='bg-cyan-900/99 rounded-3xl p-8 shadow-xl text-white relative overflow-hidden'>
                <div className='relative z-10'>
-                 <div className='bg-white/10 w-max p-2 rounded-xl mb-4'>
+                 <div className='flex flex-row gap-4'>
+                  <div className='bg-white/10 w-max p-2 rounded-xl mb-4'>
                    <FaUserMd className='text-2xl text-[#5ff67b]' />
                  </div>
-                 <h2 className='text-2xl font-bold mb-2'>Add New Doctor</h2>
+                 <h2 className='text-3xl font-bold mb-2'>Add New Doctor</h2>
+                 </div>
                  <p className='text-white text-sm mb-6 leading-relaxed'>
                    Initiate a new onboarding pipeline and assign initial hospital parameters.
                  </p>
@@ -212,7 +214,7 @@ export default function DashboardPage() {
                  </Link>
                  <Link href="/settings" className='flex items-center gap-3 p-3 border border-gray-100 bg-cyan-900/99  rounded-2xl hover:scale-105 transition-transform'>
                     <div className='w-10 h-10 text-[#5ff67b] bg-white/10 rounded-xl flex items-center justify-center'>
-                      <FaCheckCircle />
+                      <FaGears />
                     </div>
                     <div>
                       <h4 className='font-bold text-sm text-white'>Global Settings</h4>

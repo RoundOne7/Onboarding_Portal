@@ -31,8 +31,8 @@ export default function Sidebar() {
       {/* HEADER SECTION */}
       <div className='p-8 pb-4'>
         <h1 className='text-2xl font-bold flex items-center gap-3 tracking-wide'>
-          <div className='bg-blue-500 p-2 rounded-lg'>
-             <FaKitMedical className="text-white text-lg" />
+          <div className='text-[#5ff67b] bg-white/10 p-2 rounded-lg'>
+             <FaKitMedical className=" text-2xl" />
           </div>
           HMS Portal
         </h1>
