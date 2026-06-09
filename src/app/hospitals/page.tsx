@@ -13,7 +13,7 @@ import { supabase }
 export default function HospitalsPage() {
 
     const [hospitals, setHospitals] =
-        useState([])
+        useState<any[]>([])
 
     const [loading, setLoading] =
         useState(true)
@@ -47,14 +47,14 @@ export default function HospitalsPage() {
 
         if (!error && data) {
 
-            setHospitals(data)
+            setHospitals(data as any[])
         }
 
         setLoading(false)
     }
 
     async function toggleHospitalStatus(
-        hospital
+        hospital: any
     ) {
 
         await supabase
