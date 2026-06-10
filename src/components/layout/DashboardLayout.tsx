@@ -59,8 +59,8 @@ export default function DashboardLayout({
         
         {/* Your Top Header (Doctor's Onboarding Portal) */}
         <header className="flex justify-between items-center p-6 bg-[#f8fafc] border-b border-gray-100">
-           <h1 className="text-xl font-bold text-slate-800">Doctor's Onboarding Portal</h1>
-           <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</button>
+           <h1 className="text-3xl font-bold text-slate-800">Doctor's Onboarding Portal</h1>
+           {/* <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</button> */}
         </header>
 
         {/* This is where DashboardPage gets rendered */}

@@ -22,11 +22,17 @@ const weekdays = [
 
 ]
 
-export default function SchedulePage({
+// export default function SchedulePage({
 
-    params
+//     params
 
-}: any) {
+// }:  any) {
+
+export default function SchedulePage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
 
     const resolvedParams = use(params)
 

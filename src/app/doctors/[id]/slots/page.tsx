@@ -10,11 +10,17 @@ import DashboardLayout from '../../../../components/layout/DashboardLayout'
 
 import { supabase } from '../../../../lib/supabase'
 
-export default function SlotGeneratorPage({
+// export default function SlotGeneratorPage({
 
-    params
+//     params
 
-}: any) {
+// }: any) {
+
+export default function SchedulePage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> 
+}) {
 
     const resolvedParams = use(params)
 

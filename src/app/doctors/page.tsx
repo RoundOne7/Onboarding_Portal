@@ -15,7 +15,7 @@ export default function DoctorsPage() {
 
     const [doctors,
         setDoctors]
-        = useState([])
+        = useState<any[]>([])
 
     const [search,
         setSearch]
@@ -47,7 +47,7 @@ export default function DoctorsPage() {
 
         if (!error && data) {
 
-            setDoctors(data)
+            setDoctors(data as any[])
         }
     }
 
