@@ -128,7 +128,7 @@ import { usePathname } from 'next/navigation'
 import { FiGrid, FiUsers, FiSettings, FiHeadphones, FiLogOut } from 'react-icons/fi'
 import { MdOutlineLocalHospital } from 'react-icons/md'
 import { BiChevronRight, BiChevronLeft } from 'react-icons/bi'
-import { FaKitMedical } from 'react-icons/fa6'
+import { FaKitMedical, FaQ, FaQuestion } from 'react-icons/fa6'
 import { supabase } from '@/src/lib/supabase'
 
 export default function Sidebar() {
@@ -160,12 +160,12 @@ export default function Sidebar() {
         }`}>
           <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <div className="min-w-[32px] w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold text-xl">
-              <FaKitMedical className="text-lg" />
+              <FaQuestion className="text-lg" />
             </div>
             {/* Hide text when collapsed */}
             {!isCollapsed && (
               <h1 className="text-xl font-bold text-slate-800 tracking-tight whitespace-nowrap">
-                HMS Portal
+                QuickCheck
               </h1>
             )}
           </Link>
