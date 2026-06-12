@@ -273,7 +273,7 @@ export default function LoginPage() {
           style={{ backgroundImage: `url(${loginWallpaper.src})` }}
         >
           
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-white/20 backdrop-blur-[0px]"></div>
 
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-8">
@@ -281,35 +281,44 @@ export default function LoginPage() {
                 <FaQuestion className='text-blue-900'/>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-800 leading-tight">QuickCheck</h1>
+                <h1 className="text-2xl font-bold text-slate-800 leading-tight">Quick<span className="text-teal-400">Check</span></h1>
                 <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
               </div>
             </div>
+            <div>
+              <h2 className='text-3xl font-bold mt-3'>Simplify Onboarding.</h2>
+              <h2 className='text-3xl font-bold mt-1'>Empower <span className='text-3xl font-bold mt-3 text-teal-400'>Care.</span></h2>
+              <div className='mt-3'>
+                <p>Streamline Hospital, Doctor and Staff Onboarding</p>
+                <p> with speed, accuracy and compliance.</p>
+              </div>
+              
+            </div>
           </div>
 
-          <div className='flex flex-row mt-4 justify-center items-center gap-12 bottom-70 right-7 relative '>
-              <div className='hover:scale-110 transition-transform duration-200'>
+          <div className='flex flex-row mt-4 justify-center items-center gap-15 bottom-61 right-7 relative '>
+              <div className='hover:scale-115 transition-transform duration-200'>
                    <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
                       <FaHospital className='text-2xl text-blue-400' />
                    </div>
-                   <p className="text-xs text-slate-600 font-medium text-center">Hospital</p>
+                   <p className="text-xs text-slate-600 font-medium text-center mt-3">Hospital</p>
                    <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
               </div>
-               <div className='hover:scale-110 transition-transform duration-200'>
+               <div className='hover:scale-115 transition-transform duration-200'>
                    <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
                       <FaUserMd className='text-2xl text-green-300'/>
                    </div>
                    <p className="text-xs text-slate-600 font-medium text-center">Doctor</p>
                    <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
               </div>
-               <div className='hover:scale-110 transition-transform duration-200'>
+               <div className='hover:scale-115 transition-transform duration-200'>
                    <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
                       <FaUser className='text-2xl text-purple-400'/>
                    </div>
                    <p className="text-xs text-slate-600 font-medium text-center">Staff</p>
                    <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
               </div>
-               <div className='hover:scale-110 transition-transform duration-200'>
+               <div className='hover:scale-115 transition-transform duration-200'>
                    <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
                       <FaFileAlt className='text-2xl text-orange-300'/>
                    </div>
@@ -319,7 +328,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 flex items-start gap-4 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white shadow-sm mt-4">
+        <div className="relative z-10 flex items-start gap-4 bg-blue-100 backdrop-blur-md p-4">
           <div className="mt-1 text-teal-500">
             <MdSecurity size={24} />
           </div>
@@ -333,7 +342,7 @@ export default function LoginPage() {
       {/* ========================================== */}
       {/* RIGHT SIDE: Login Form */}
       {/* ========================================== */}
-      <div className="w-full lg:w-[60%] flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-50/50 relative overflow-y-auto">
+      <div className="w-full lg:w-[60%] h-[100%] flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-50/50 relative overflow-y-auto">
         
         <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 relative z-10 my-auto">
           
@@ -350,7 +359,7 @@ export default function LoginPage() {
             {/* Email Input */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1 ml-1">Email Address</label>
-              <div className="relative">
+              <div className="relative hover:scale-105 transition-transform duration-200">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                   <FiMail size={18} />
                 </div>
@@ -374,7 +383,7 @@ export default function LoginPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <div className="relative">
+              <div className="relative hover:scale-105 transition-transform duration-200">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                   <FiLock size={18} />
                 </div>
@@ -415,7 +424,7 @@ export default function LoginPage() {
             <button 
               type="submit"
               disabled={loading} // Disable button while loading
-              className="w-full flex items-center justify-center gap-2 bg-[#0066FF] hover:bg-blue-700 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02]"
+              className="w-full flex items-center justify-center gap-2 bg-[#0066FF] hover:bg-blue-700 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.07]"
             >
               {loading ? (
                 // Show a loading text when verifying database
@@ -441,7 +450,7 @@ export default function LoginPage() {
             <button 
               type="button"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 text-slate-700 py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 text-slate-700 py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
             >
               <FcGoogle size={20} />
               Sign in with Google
