@@ -131,11 +131,11 @@ import { BiChevronRight, BiChevronLeft } from 'react-icons/bi'
 import { FaKitMedical, FaQ, FaQuestion } from 'react-icons/fa6'
 import { supabase } from '@/src/lib/supabase'
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsCollapsed: (collapsed: boolean) => void }) {
   const pathname = usePathname()
   
   // State to manage sidebar expansion/collapse
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Helper to check active routes
   const isActive = (path: string) => pathname === path
