@@ -60,7 +60,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <main className="w-full max-w-[1180px] ml-4 px-6 pt-5 pb-4 text-[#0B1528]">
+      <main className="w-full max-w-[1180px] ml-0 px-6 pt-5 pb-4 text-[#0B1528]">
         <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
           <div>
             <h1 className="text-[28px] leading-tight font-bold text-[#0B1528]">
@@ -205,7 +205,7 @@ export default function DashboardPage() {
         </section>
 
         <footer className="mt-14 flex items-center justify-between border-t border-[#EAEEF6] pt-4 text-xs text-[#2B3E64]">
-          <p>© 2024 QuickCheck. All rights reserved.</p>
+          <p>© 2026 QuickCheck. All rights reserved.</p>
           <div className="flex items-center gap-3">
             <Link href="/privacy" className="hover:text-[#1B60E0]">Privacy Policy</Link>
             <span>•</span>
