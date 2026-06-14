@@ -440,9 +440,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import DashboardLayout from '../../../components/layout/DashboardLayout'
 import { supabase } from '../../../lib/supabase'
 import { FiUploadCloud } from 'react-icons/fi'
+import { FaQuestion } from 'react-icons/fa'
 
 export default function AddHospitalPage() {
     const router = useRouter()
@@ -690,13 +690,22 @@ export default function AddHospitalPage() {
     }
 
     return (
-        <DashboardLayout>
-            <div className="flex h-full min-h-[80vh] bg-gray-50/30 w-full">
+            <div className="flex h-full min-h-[80vh] bg-gray-50/30 w-[90%] mx-auto">
                 
                 {/* ========================================== */}
                 {/* LEFT SIDEBAR: Visual Stepper               */}
                 {/* ========================================== */}
                 <div className="w-64 py-8 pr-8 hidden md:block shrink-0">
+                    <div className="flex items-center gap-3 mb-12">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-lg">
+                            <FaQuestion className='text-blue-900'/>
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-800 leading-tight">Quick<span className="text-teal-400">Check</span></h1>
+                            <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
+                        </div>
+                </div>
+
                     <div className="relative">
                         {steps.map((step, index) => (
                             <div key={step.id} className="flex items-start mb-8 relative">
@@ -776,6 +785,5 @@ export default function AddHospitalPage() {
 
                 </div>
             </div>
-        </DashboardLayout>
     )
 }
