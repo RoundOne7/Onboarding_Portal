@@ -193,17 +193,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-// Icons
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import { FcGoogle } from 'react-icons/fc'
 import { MdSecurity } from 'react-icons/md'
 import { FaHospital, FaQuestion } from 'react-icons/fa6'
 import { FaFileAlt, FaUser, FaUserMd } from 'react-icons/fa'
-
-// Assets and Libs
-import loginWallpaper from '../assets/login_wallpaper_exact.png'
-import { supabase } from '../lib/supabase' // Make sure this path is correct!
+import loginWallpaper from '../assets/final.jpeg'
+import { supabase } from '../lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -222,7 +218,6 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // 1. Authenticate user with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -236,7 +231,6 @@ export default function LoginPage() {
 
       const userEmail = data.user.email
 
-      // 2. Check internal_users table for portal access
       const { data: internalUser, error: dbError } = await supabase
         .from('internal_users')
         .select('*')
@@ -251,7 +245,6 @@ export default function LoginPage() {
         return
       }
 
-      // 3. Success! Redirect to Dashboard
       router.push('/dashboard')
       
     } catch (err) {
@@ -265,90 +258,93 @@ export default function LoginPage() {
     <div className="h-screen flex w-full bg-white font-sans overflow-hidden">
       
       {/* ========================================== */}
-      {/* LEFT SIDE: Promotional & Branding */}
+      {/* LEFT SIDE: Promotional & Branding          */}
       {/* ========================================== */}
-      <div className='flex flex-col w-[40%]'>
-        <div 
-          className="hidden lg:flex w-[100%] h-[100%] p-8 flex-col justify-between relative overflow-hidden border-r border-gray-100 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${loginWallpaper.src})` }}
-        >
+      <div 
+        // 1. Removed 'p-8' from here so the bottom banner can touch the edges!
+        className='hidden lg:flex flex-col w-[40%] xl:w-[45%] h-full justify-between relative bg-cover bg-center bg-no-repeat border-r border-gray-100'
+        style={{ backgroundImage: `url(${loginWallpaper.src})` }}
+      >
+        {/* 2. Added 'p-8 pb-0' here so the top content still has padding */}
+        <div className="relative z-10 flex flex-col h-full p-8 pb-0">
           
-          <div className="absolute inset-0 bg-white/20 backdrop-blur-[0px]"></div>
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-lg">
-                <FaQuestion className='text-blue-900'/>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800 leading-tight">Quick<span className="text-teal-400">Check</span></h1>
-                <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
-              </div>
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-lg shrink-0">
+              <FaQuestion className='text-blue-900'/>
             </div>
             <div>
-              <h2 className='text-3xl font-bold mt-3'>Simplify Onboarding.</h2>
-              <h2 className='text-3xl font-bold mt-1'>Empower <span className='text-3xl font-bold mt-3 text-teal-400'>Care.</span></h2>
-              <div className='mt-3'>
-                <p>Streamline Hospital, Doctor and Staff Onboarding</p>
-                <p> with speed, accuracy and compliance.</p>
-              </div>
-              
+              <h1 className="text-2xl font-bold text-slate-800 leading-tight">Quick<span className="text-teal-500">Check</span></h1>
+              <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
+            </div>
+          </div>
+          
+          {/* Hero Text */}
+          <div>
+            <h2 className='text-3xl xl:text-4xl font-bold mt-3 leading-tight text-slate-800'>Simplify Onboarding.</h2>
+            <h2 className='text-3xl xl:text-4xl font-bold mt-1 leading-tight text-slate-800'>Empower <span className='text-teal-500'>Care.</span></h2>
+            <div className='mt-4 text-slate-700 text-sm xl:text-base'>
+              <p>Streamline Hospital, Doctor and Staff Onboarding</p>
+              <p>with speed, accuracy and compliance.</p>
             </div>
           </div>
 
-          <div className='flex flex-row mt-4 justify-center items-center gap-15 bottom-61 right-7 relative '>
-              <div className='hover:scale-115 transition-transform duration-200'>
-                   <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
+          {/* Feature Grid */}
+          <div className='flex flex-wrap xl:flex-nowrap justify-between items-center gap-6 xl:gap-8 mt-7 relative w-xl'>
+              <div className='hover:scale-115 transition-transform duration-200 cursor-pointer'>
+                   <div className='w-14 h-14 xl:w-16 xl:h-16 bg-white mb-3 rounded-2xl flex items-center justify-center shadow-md mx-auto'>
                       <FaHospital className='text-2xl text-blue-400' />
                    </div>
-                   <p className="text-xs text-slate-600 font-medium text-center mt-3">Hospital</p>
-                   <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
+                   <p className="text-[11px] xl:text-xs text-slate-700 font-bold text-center leading-tight">Hospital<br/>Onboarding</p>
               </div>
-               <div className='hover:scale-115 transition-transform duration-200'>
-                   <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
-                      <FaUserMd className='text-2xl text-green-300'/>
+              
+              <div className='hover:scale-115 transition-transform duration-200 cursor-pointer'>
+                   <div className='w-14 h-14 xl:w-16 xl:h-16 bg-white mb-3 rounded-2xl flex items-center justify-center shadow-md mx-auto'>
+                      <FaUserMd className='text-2xl text-green-400'/>
                    </div>
-                   <p className="text-xs text-slate-600 font-medium text-center">Doctor</p>
-                   <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
+                   <p className="text-[11px] xl:text-xs text-slate-700 font-bold text-center leading-tight">Doctor<br/>Onboarding</p>
               </div>
-               <div className='hover:scale-115 transition-transform duration-200'>
-                   <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
+              
+              <div className='hover:scale-115 transition-transform duration-200 cursor-pointer'>
+                   <div className='w-14 h-14 xl:w-16 xl:h-16 bg-white mb-3 rounded-2xl flex items-center justify-center shadow-md mx-auto'>
                       <FaUser className='text-2xl text-purple-400'/>
                    </div>
-                   <p className="text-xs text-slate-600 font-medium text-center">Staff</p>
-                   <p className="text-xs text-slate-600 font-medium text-center">Onboarding</p>
+                   <p className="text-[11px] xl:text-xs text-slate-700 font-bold text-center leading-tight">Staff<br/>Onboarding</p>
               </div>
-               <div className='hover:scale-115 transition-transform duration-200'>
-                   <div className='w-15 h-15 bg-white mb-2 rounded-2xl flex items-center justify-center shadow-md'>
-                      <FaFileAlt className='text-2xl text-orange-300'/>
+              
+              <div className='hover:scale-115 transition-transform duration-200 cursor-pointer'>
+                   <div className='w-14 h-14 xl:w-16 xl:h-16 bg-white mb-3 rounded-2xl flex items-center justify-center shadow-md mx-auto'>
+                      <FaFileAlt className='text-2xl text-orange-400'/>
                    </div>
-                   <p className="text-xs text-slate-600 font-medium text-center">Document</p>
-                   <p className="text-xs text-slate-600 font-medium text-center">Verification</p>
+                   <p className="text-[11px] xl:text-xs text-slate-700 font-bold text-center leading-tight">Document<br/>Verification</p>
               </div>
           </div>
         </div>
 
-        <div className="relative z-10 flex items-start gap-4 bg-blue-100 backdrop-blur-md p-4">
-          <div className="mt-1 text-teal-500">
-            <MdSecurity size={24} />
+        {/* 3. Bottom Security Banner - Full Width & Flush */}
+        <div className="w-full relative z-10 flex items-center gap-4 bg-[#e8f2fc] px-5 xl:px-8 py-3 shrink-0 mt-8">
+          <div className="text-[#00c6a9]"> {/* Exact teal/green color from image */}
+            <MdSecurity size={30} />
           </div>
           <div>
-            <h4 className="font-bold text-slate-800 text-sm">Secure. Reliable. Compliant.</h4>
-            <p className="text-xs text-slate-600 mt-1">Your data is protected with enterprise-grade security and industry best practices.</p>
+            <h4 className="font-bold text-slate-800 text-[15px] mb-0.5">Secure. Reliable. Compliant.</h4>
+            <p className="text-[13px] text-slate-600 font-medium">
+              Your data is protected with enterprise-grade security and industry best practices.
+            </p>
           </div>
         </div>
       </div>
 
       {/* ========================================== */}
-      {/* RIGHT SIDE: Login Form */}
+      {/* RIGHT SIDE: Login Form                     */}
       {/* ========================================== */}
-      <div className="w-full lg:w-[60%] h-[100%] flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-50/50 relative overflow-y-auto">
+      <div className="w-full lg:w-[60%] xl:w-[55%] h-full flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-50/50 relative overflow-y-auto">
         
-        <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 relative z-10 my-auto">
+        <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 relative z-10 my-auto shrink-0">
           
           <div className="flex flex-col items-center mb-8 text-center">
             <div className="w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-md">
-               <FaQuestion className='text-blue-900'/>
+               <FaQuestion className='text-white text-xl'/>
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome Back!</h2>
             <p className="text-sm text-slate-500">Sign in to your onboarding portal account</p>
@@ -367,7 +363,7 @@ export default function LoginPage() {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading} // Disable input while loading
+                  disabled={loading}
                   placeholder="Enter your email" 
                   className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   required
@@ -391,7 +387,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading} // Disable input while loading
+                  disabled={loading}
                   placeholder="Enter your password" 
                   className="w-full pl-11 pr-12 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   required
@@ -423,11 +419,10 @@ export default function LoginPage() {
             {/* Sign In Button */}
             <button 
               type="submit"
-              disabled={loading} // Disable button while loading
-              className="w-full flex items-center justify-center gap-2 bg-[#0066FF] hover:bg-blue-700 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.07]"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-[#0066FF] hover:bg-blue-700 text-white py-3.5 rounded-xl font-semibold text-sm transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.03]"
             >
               {loading ? (
-                // Show a loading text when verifying database
                 'Signing In...'
               ) : (
                 <>
@@ -437,24 +432,24 @@ export default function LoginPage() {
             </button>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center py-2">
+            {/* <div className="relative flex items-center justify-center py-2 mt-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative bg-white px-4 text-xs font-medium text-slate-400">
                 or continue with
               </div>
-            </div>
+            </div> */}
 
             {/* Google Sign In */}
-            <button 
+            {/* <button 
               type="button"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 text-slate-700 py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 hover:bg-gray-50 text-slate-700 py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.03]"
             >
               <FcGoogle size={20} />
               Sign in with Google
-            </button>
+            </button> */}
           </form>
 
           <p className="text-center text-sm font-medium text-slate-500 mt-6">
@@ -462,7 +457,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="w-full mt-auto pt-6 flex justify-between items-center text-[11px] font-medium text-slate-400 max-w-md mx-auto">
+        <div className="w-full mt-auto pt-6 flex justify-between items-center text-[11px] font-medium text-slate-400 max-w-md mx-auto shrink-0">
           <p>© 2026 QuickCheck.</p>
           <div className="flex gap-4">
             <Link href="/privacy" className="hover:text-slate-600 transition-colors">Privacy</Link>
