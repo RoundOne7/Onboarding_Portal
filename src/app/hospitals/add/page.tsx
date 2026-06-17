@@ -514,6 +514,10 @@ export default function AddHospitalPage() {
         }
     }
 
+    // 4. Form States: Step 4 (Documents)
+        const [registrationCert, setRegistrationCert] = useState<File | null>(null)
+        const [complianceDoc, setComplianceDoc] = useState<File | null>(null)
+        
     // --- FINAL SUBMISSION LOGIC ---
     
     // This only fires on the very last step!
@@ -593,7 +597,19 @@ export default function AddHospitalPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Number of Beds</label>
-                            <input type='number' placeholder='Enter number of beds' value={numberOfBeds} onChange={(e) => setNumberOfBeds(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input 
+                                type="text" 
+                                inputMode="numeric" 
+                                pattern="[0-9]*"
+                                placeholder="Enter number of beds" 
+                                value={numberOfBeds}
+                                onChange={(e) => {
+                                // Only allow digits to be typed
+                                const onlyNumbers = e.target.value.replace(/\D/g, '')
+                                setNumberOfBeds(onlyNumbers)
+                                }}
+                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+                            />
                         </div>
                         <div className="md:col-span-2 mt-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Hospital Logo</label>
@@ -610,12 +626,31 @@ export default function AddHospitalPage() {
                             <input type='email' placeholder='hospital@email.com' value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='+91 9876543210' value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex gap-2">
+                            {/* Optional: Static Country Code Box */}
+                               <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                                    +91
+                                </div>
+                                <input 
+                                    type='tel' 
+                                    maxLength={10}
+                                    placeholder='9876543210' 
+                                    value={phone} 
+                                    onChange={(e) => {
+                                    // This regex replaces anything that is NOT a digit (\D) with an empty string
+                                    const onlyDigits = e.target.value.replace(/\D/g, '')
+                                    setPhone(onlyDigits)
+                                    }} 
+                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                                />
+                            </div>
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Website</label>
-                            <input type='text' placeholder='www.hospitalwebsite.com' value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='url' placeholder='https://www.hospitalwebsite.com' value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
                         </div>
                     </div>
                 )
@@ -636,26 +671,87 @@ export default function AddHospitalPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Zip / Pin Code <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='400001' value={zipCode} onChange={(e) => setZipCode(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input 
+                                type="text" 
+                                inputMode="numeric" 
+                                pattern="[0-9]*" 
+                                maxLength={6}
+                                placeholder='400001' 
+                                value={zipCode} 
+                                onChange={(e) => {
+                                // Strip out any non-digit characters
+                                const onlyNumbers = e.target.value.replace(/\D/g, '')
+                                setZipCode(onlyNumbers)
+                                }} 
+                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                            />
                         </div>
                     </div>
                 )
             case 4:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="md:col-span-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center">
-                            <FiUploadCloud size={32} className="text-blue-500 mb-3" />
-                            <p className="text-sm font-semibold text-slate-700 mb-1">Upload Hospital Registration Certificate</p>
-                            <p className="text-xs text-gray-500 mb-4">PDF, JPG or PNG (Max 5MB)</p>
-                            <button className="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-50">Select File</button>
-                        </div>
-                        <div className="md:col-span-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center">
-                            <FiUploadCloud size={32} className="text-blue-500 mb-3" />
-                            <p className="text-sm font-semibold text-slate-700 mb-1">Upload Compliance/License Documents</p>
-                            <p className="text-xs text-gray-500 mb-4">PDF, JPG or PNG (Max 5MB)</p>
-                            <button className="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-50">Select File</button>
-                        </div>
-                    </div>
+            
+            {/* --- Registration Certificate Upload --- */}
+            <div className="md:col-span-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center">
+                <FiUploadCloud size={32} className={`${registrationCert ? 'text-green-500' : 'text-blue-500'} mb-3 transition-colors`} />
+                <p className="text-sm font-semibold text-slate-700 mb-1">
+                    {registrationCert ? 'Registration Certificate Selected' : 'Upload Hospital Registration Certificate'}
+                </p>
+                
+                {/* Show filename if uploaded, otherwise show requirements */}
+                {registrationCert ? (
+                    <p className="text-xs text-green-600 mb-4 font-medium">{registrationCert.name}</p>
+                ) : (
+                    <p className="text-xs text-gray-500 mb-4">PDF, JPG or PNG (Max 5MB)</p>
+                )}
+
+                {/* The Hidden Input Trick */}
+                <label className="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-50 cursor-pointer transition-colors">
+                    {registrationCert ? 'Change File' : 'Select File'}
+                    <input 
+                        type="file" 
+                        accept=".pdf, .jpg, .jpeg, .png" 
+                        className="hidden" 
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                setRegistrationCert(e.target.files[0])
+                            }
+                        }} 
+                    />
+                </label>
+            </div>
+
+            {/* --- Compliance Documents Upload --- */}
+            <div className="md:col-span-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center">
+                <FiUploadCloud size={32} className={`${complianceDoc ? 'text-green-500' : 'text-blue-500'} mb-3 transition-colors`} />
+                <p className="text-sm font-semibold text-slate-700 mb-1">
+                    {complianceDoc ? 'Compliance Document Selected' : 'Upload Compliance/License Documents'}
+                </p>
+                
+                {/* Show filename if uploaded, otherwise show requirements */}
+                {complianceDoc ? (
+                    <p className="text-xs text-green-600 mb-4 font-medium">{complianceDoc.name}</p>
+                ) : (
+                    <p className="text-xs text-gray-500 mb-4">PDF, JPG or PNG (Max 5MB)</p>
+                )}
+
+                {/* The Hidden Input Trick */}
+                <label className="bg-white border border-gray-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-50 cursor-pointer transition-colors">
+                    {complianceDoc ? 'Change File' : 'Select File'}
+                    <input 
+                        type="file" 
+                        accept=".pdf, .jpg, .jpeg, .png" 
+                        className="hidden" 
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                setComplianceDoc(e.target.files[0])
+                            }
+                        }} 
+                    />
+                </label>
+            </div>
+        </div>
                 )
             case 5:
                 return (
@@ -669,8 +765,27 @@ export default function AddHospitalPage() {
                             <input type='email' placeholder='admin@hospital.com' value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Admin Phone Number</label>
-                            <input type='text' placeholder='+91 9000000000' value={adminPhone} onChange={(e) => setAdminPhone(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                Admin Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex gap-2">
+                            {/* Optional: Static Country Code Box */}
+                               <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                                    +91
+                                </div>
+                                <input 
+                                    type='tel' 
+                                    maxLength={10}
+                                    placeholder='9876543210' 
+                                    value={phone} 
+                                    onChange={(e) => {
+                                    // This regex replaces anything that is NOT a digit (\D) with an empty string
+                                    const onlyDigits = e.target.value.replace(/\D/g, '')
+                                    setPhone(onlyDigits)
+                                    }} 
+                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                                />
+                            </div>
                         </div>
                     </div>
                 )
@@ -759,7 +874,7 @@ export default function AddHospitalPage() {
                     <div className="flex justify-between items-center mt-8 w-full">
                         <button 
                             onClick={handlePrevStep}
-                            className="px-6 py-2.5 border border-gray-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
+                            className="px-6 py-2.5 border border-gray-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
                         >
                             {currentStep === 1 ? 'Cancel' : '← Back'}
                         </button>
