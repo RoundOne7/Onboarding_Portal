@@ -573,11 +573,11 @@ export default function AddHospitalPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Name <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Enter hospital name' value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='text' placeholder='Enter hospital name' value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Type <span className="text-red-500">*</span></label>
-                            <select value={hospitalType} onChange={(e) => setHospitalType(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white">
+                            <select value={hospitalType} onChange={(e) => setHospitalType(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
                                 <option value=''>Select type</option>
                                 <option value='General'>General Hospital</option>
                                 <option value='Specialty'>Specialty Clinic</option>
@@ -586,11 +586,11 @@ export default function AddHospitalPage() {
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Enter registration number' value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='text' placeholder='Enter registration number' value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Year of Establishment</label>
-                            <select value={yearOfEstablishment} onChange={(e) => setYearOfEstablishment(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white">
+                            <select value={yearOfEstablishment} onChange={(e) => setYearOfEstablishment(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
                                 <option value=''>Select year</option>
                                 {Array.from({ length: new Date().getFullYear() - 1949 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
                             </select>
@@ -608,12 +608,12 @@ export default function AddHospitalPage() {
                                 const onlyNumbers = e.target.value.replace(/\D/g, '')
                                 setNumberOfBeds(onlyNumbers)
                                 }}
-                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:scale-102" 
                             />
                         </div>
                         <div className="md:col-span-2 mt-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Hospital Logo</label>
-                            <button className="flex items-center gap-2 border border-blue-100 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-100 transition-colors"><FiUploadCloud size={18} />Upload Logo</button>
+                            <button className="flex items-center gap-2 border border-blue-100 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-100 transition-colors hover:scale-102"><FiUploadCloud size={18} />Upload Logo</button>
                             <p className="text-[11px] text-gray-400 mt-2 font-medium">JPG, PNG or SVG (Max. 2MB)</p>
                         </div>
                     </div>
@@ -623,10 +623,10 @@ export default function AddHospitalPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Official Email <span className="text-red-500">*</span></label>
-                            <input type='email' placeholder='hospital@email.com' value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='email' placeholder='hospital@email.com' value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2 ">
                                 Phone Number <span className="text-red-500">*</span>
                             </label>
                             <div className="flex gap-2">
@@ -644,13 +644,13 @@ export default function AddHospitalPage() {
                                     const onlyDigits = e.target.value.replace(/\D/g, '')
                                     setPhone(onlyDigits)
                                     }} 
-                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
                                 />
                             </div>
                         </div>
                         <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Website</label>
-                            <input type='url' placeholder='https://www.hospitalwebsite.com' value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='url' placeholder='https://www.hospitalwebsite.com' value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                     </div>
                 )
@@ -659,15 +659,15 @@ export default function AddHospitalPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Street Address <span className="text-red-500">*</span></label>
-                            <textarea placeholder='Full hospital address' rows={3} value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <textarea placeholder='Full hospital address' rows={3} value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Mumbai' value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='text' placeholder='Mumbai' value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">State <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Maharashtra' value={state} onChange={(e) => setState(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='text' placeholder='Maharashtra' value={state} onChange={(e) => setState(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Zip / Pin Code <span className="text-red-500">*</span></label>
@@ -683,7 +683,7 @@ export default function AddHospitalPage() {
                                 const onlyNumbers = e.target.value.replace(/\D/g, '')
                                 setZipCode(onlyNumbers)
                                 }} 
-                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
                             />
                         </div>
                     </div>
@@ -758,11 +758,11 @@ export default function AddHospitalPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Primary Admin Name <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='John Doe' value={adminName} onChange={(e) => setAdminName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='text' placeholder='John Doe' value={adminName} onChange={(e) => setAdminName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Admin Email <span className="text-red-500">*</span></label>
-                            <input type='email' placeholder='admin@hospital.com' value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" />
+                            <input type='email' placeholder='admin@hospital.com' value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -783,7 +783,7 @@ export default function AddHospitalPage() {
                                     const onlyDigits = e.target.value.replace(/\D/g, '')
                                     setPhone(onlyDigits)
                                     }} 
-                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400" 
+                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
                                 />
                             </div>
                         </div>
