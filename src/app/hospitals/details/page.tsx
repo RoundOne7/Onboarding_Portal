@@ -11,6 +11,15 @@ import {
 } from 'react-icons/fa'
 
 export default function HospitalDetailsPage() {
+  const tabs = [
+    'Overview',
+    'Documents',
+    'Admins',
+    'Doctors (56)',
+    'Departments',
+    'Activity Log',
+  ]
+
   return (
     <DashboardLayout>
       <main className="w-full max-w-[1180px] px-6 pt-5 pb-6 text-[#0B1528]">
@@ -63,22 +72,21 @@ export default function HospitalDetailsPage() {
           </div>
         </section>
 
-        <section className="bg-white border border-[#EAEEF6] rounded-2xl px-6 mb-4">
-          <div className="flex gap-8">
-            {['Overview', 'Documents', 'Admins', 'Doctors (56)', 'Departments', 'Activity Log'].map(
-              (tab, index) => (
-                <button
-                  key={tab}
-                  className={`py-4 text-sm font-semibold ${
-                    index === 0
-                      ? 'text-[#1B60E0] border-b-2 border-[#1B60E0]'
-                      : 'text-[#2B3E64]'
-                  }`}
-                >
-                  {tab}
-                </button>
-              )
-            )}
+        {/* Tabs - evenly spread like reference */}
+        <section className="bg-white border border-[#EAEEF6] rounded-2xl mb-4 overflow-hidden">
+          <div className="grid grid-cols-6 w-full">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab}
+                className={`py-4 text-sm font-semibold text-center whitespace-nowrap ${
+                  index === 0
+                    ? 'text-[#1B60E0] border-b-2 border-[#1B60E0]'
+                    : 'text-[#2B3E64] hover:text-[#1B60E0]'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -95,7 +103,9 @@ export default function HospitalDetailsPage() {
               <InfoBlock label="Phone" value="+91 98765 43210" />
 
               <div>
-                <p className="text-xs text-[#889ABF] font-semibold mb-2">Address</p>
+                <p className="text-xs text-[#889ABF] font-semibold mb-2">
+                  Address
+                </p>
                 <p className="text-sm font-semibold">
                   123, MG Road, Andheri East, Mumbai, Maharashtra - 400069
                 </p>
