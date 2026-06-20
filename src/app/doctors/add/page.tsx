@@ -692,6 +692,17 @@ export default function AddDoctorPage() {
                                     />
                                     Other
                                 </label>
+                                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="gender" 
+                                        value="Prefer not to say" 
+                                        checked={gender === 'Prefer not to say'} 
+                                        onChange={(e) => setGender(e.target.value)} 
+                                        className="w-4 h-4 text-[#0066FF] border-gray-300 focus:ring-[#0066FF] cursor-pointer" 
+                                    />
+                                    Prefer not to say
+                                </label>
                             </div>
                         </div>
 
