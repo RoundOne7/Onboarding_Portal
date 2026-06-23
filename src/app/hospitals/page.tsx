@@ -480,8 +480,10 @@ import {
   FaChevronRight,
   FaHospitalSymbol
 } from 'react-icons/fa'
+import { useRouter } from 'next/navigation'
 
 export default function HospitalsPage() {
+    const router = useRouter()
     const [hospitals, setHospitals] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -578,7 +580,7 @@ export default function HospitalsPage() {
                             />
                         </div>
 
-                        <button className="h-12 px-5 rounded-xl border border-[#EAEEF6] bg-white text-[#2B3E64] text-sm font-semibold flex items-center gap-2 hover:bg-gray-50 transition-colors">
+                        <button className="h-12 px-5 rounded-xl border border-[#EAEEF6] bg-white text-[#2B3E64] text-sm font-semibold flex items-center gap-2 hover:bg-gray-100 transition-colors">
                             <FaFilter className="text-xs text-[#889ABF]" />
                             Filters
                         </button>
@@ -607,7 +609,7 @@ export default function HospitalsPage() {
                             className={`min-w-fit px-5 py-2.5 rounded-xl text-sm font-semibold border transition-colors whitespace-nowrap ${
                                 activeTab === tab.id
                                     ? 'bg-[#E3ECFD] border-[#C6D9FA] text-[#0066FF]'
-                                    : 'bg-white border-[#EAEEF6] text-[#2B3E64] hover:bg-gray-50'
+                                    : 'bg-white border-[#EAEEF6] text-[#2B3E64] hover:bg-gray-100'
                             }`}
                         >
                             {tab.label}
@@ -708,7 +710,8 @@ export default function HospitalsPage() {
                                             {/* Actions */}
                                             <td className="px-4 py-4">
                                                 <div className="flex items-center justify-center gap-2 opacity-100 lg:opacity-60 group-hover:opacity-100 transition-opacity">
-                                                    <button className="w-8 h-8 rounded-lg bg-blue-50 text-[#0066FF] flex items-center justify-center hover:bg-[#0066FF] hover:text-white transition-colors" title="View Details">
+                                                    <button className="w-8 h-8 rounded-lg bg-blue-50 text-[#0066FF] flex items-center justify-center hover:bg-[#0066FF] hover:text-white transition-colors" title="View Details" onClick={() => router.push('/hospitals/details')}>
+                                                        {/* onClick={() => router.push(`/hospitals/details/${hospital.id}`)  */}
                                                         <FaEye size={13} />
                                                     </button>
                                                     <button className="w-8 h-8 rounded-lg bg-gray-100 text-slate-600 flex items-center justify-center hover:bg-slate-200 transition-colors" title="Edit Hospital">
