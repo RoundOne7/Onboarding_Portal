@@ -5,47 +5,41 @@ import {
   FaSearch,
   FaFilter,
   FaEye,
-  FaEdit,
-  FaTrash,
-  FaChevronLeft,
-  FaChevronRight,
+  FaPen,
+  FaCheckCircle,
+  FaClock,
+  FaTimesCircle
 } from 'react-icons/fa'
 
 export default function DoctorsPage() {
-  const doctors = [
-    {
-      name: 'Dr. Priya Sharma',
-      speciality: 'Cardiologist',
-      hospital: 'City Care Hospital',
-      status: 'Approved',
-      date: '12 May 2024',
-      image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=200&q=80',
-    },
-    {
-      name: 'Dr. Ananya Reddy',
-      speciality: 'Dermatologist',
-      hospital: 'Sunrise Hospital',
-      status: 'Approved',
-      date: '10 May 2024',
-      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=200&q=80',
-    },
-    {
-      name: 'Dr. Amit Verma',
-      speciality: 'Pediatrician',
-      hospital: 'HealthPlus Hospital',
-      status: 'Pending',
-      date: '08 May 2024',
-      image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=200&q=80',
-    },
-    {
-      name: 'Dr. Rahul Sharma',
-      speciality: 'Neurologist',
-      hospital: 'Life Line Hospital',
-      status: 'Rejected',
-      date: '06 May 2024',
-      image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=200&q=80',
-    },
+  const tabs = [
+    { label: 'All', count: '1,248', active: true },
+    { label: 'Approved', count: '842', active: false },
+    { label: 'Pending', count: '264', active: false },
+    { label: 'Rejected', count: '140', active: false },
   ]
+
+  const doctors = [
+    { name: 'Dr. Rahul Sharma', specialty: 'Cardiologist', hospital: 'City Care Hospital', status: 'Approved', joined: '12 May 2024', image: 'https://randomuser.me/api/portraits/men/32.jpg' },
+    { name: 'Dr. Priya Mehta', specialty: 'Dermatologist', hospital: 'Sunrise Hospital', status: 'Approved', joined: '10 May 2024', image: 'https://randomuser.me/api/portraits/women/44.jpg' },
+    { name: 'Dr. Amit Verma', specialty: 'Orthopedic Surgeon', hospital: 'HealthPlus Hospital', status: 'Pending', joined: '08 May 2024', image: 'https://randomuser.me/api/portraits/men/75.jpg' },
+    { name: 'Dr. Neha Kapoor', specialty: 'Pediatrician', hospital: 'Life Line Hospital', status: 'Rejected', joined: '06 May 2024', image: 'https://randomuser.me/api/portraits/women/68.jpg' },
+    { name: 'Dr. Kunal Patel', specialty: 'Neurologist', hospital: 'Wellness Hospital', status: 'Approved', joined: '04 May 2024', image: 'https://randomuser.me/api/portraits/men/52.jpg' },
+    { name: 'Dr. Simran Kaur', specialty: 'Gynecologist', hospital: 'Metro Hospital', status: 'Approved', joined: '03 May 2024', image: 'https://randomuser.me/api/portraits/women/65.jpg' },
+    { name: 'Dr. Vivek Nair', specialty: 'ENT Specialist', hospital: 'Star Care Hospital', status: 'Approved', joined: '01 May 2024', image: 'https://randomuser.me/api/portraits/men/45.jpg' },
+  ]
+
+  const statusClass = (status: string) => {
+    if (status === 'Approved') return 'bg-[#DBF1CF] text-[#335F1B]'
+    if (status === 'Pending') return 'bg-[#FFFBED] text-[#E45412]'
+    return 'bg-[#FFE2E2] text-[#B91C1C]'
+  }
+
+  const statusIcon = (status: string) => {
+    if (status === 'Approved') return <FaCheckCircle />
+    if (status === 'Pending') return <FaClock />
+    return <FaTimesCircle />
+  }
 
   return (
     <DashboardLayout>
@@ -77,7 +71,7 @@ export default function DoctorsPage() {
 
             <Link
               href="/doctors/add"
-              className="h-12 px-5 rounded-xl bg-[#1B60E0] text-white text-sm font-semibold flex items-center gap-2"
+              className="h-12 px-5 rounded-xl bg-[#1B60E0] text-white text-sm font-semibold flex items-center gap-2 shadow-sm"
             >
               <FaPlus className="text-xs" />
               Add Doctor
@@ -86,101 +80,63 @@ export default function DoctorsPage() {
         </section>
 
         <section className="flex items-center gap-4 mb-4">
-          {['All (1248)', 'Approved (842)', 'Pending (264)', 'Rejected (140)'].map(
-            (tab, index) => (
-              <button
-                key={tab}
-                className={`min-w-[135px] px-5 py-2.5 rounded-xl text-sm font-semibold border ${
-                  index === 0
-                    ? 'bg-[#E3ECFD] border-[#C6D9FA] text-[#1B60E0]'
-                    : 'bg-white border-[#EAEEF6] text-[#2B3E64]'
-                }`}
-              >
-                {tab}
-              </button>
-            )
-          )}
+          {tabs.map((tab) => (
+            <button
+              key={tab.label}
+              className={`min-w-[135px] px-5 py-2.5 rounded-xl text-sm font-semibold border ${
+                tab.active
+                  ? 'bg-[#E3ECFD] border-[#C6D9FA] text-[#1B60E0]'
+                  : 'bg-white border-[#EAEEF6] text-[#2B3E64]'
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
         </section>
 
-        <section className="bg-white border border-[#EAEEF6] rounded-2xl overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#EAEEF6] bg-[#FCFDFF]">
-                <th className="text-left px-6 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Doctor Name
-                </th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Specialty
-                </th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Hospital
-                </th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Status
-                </th>
-                <th className="text-left px-4 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Joined On
-                </th>
-                <th className="text-center px-4 py-4 text-xs font-bold text-[#889ABF] uppercase">
-                  Actions
-                </th>
+        <section className="bg-white border border-[#EAEEF6] rounded-2xl shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[#F8F9FC] text-[#2B3E64]">
+              <tr>
+                <th className="text-left px-5 py-4 font-semibold">Doctor Name</th>
+                <th className="text-left px-5 py-4 font-semibold">Specialty</th>
+                <th className="text-left px-5 py-4 font-semibold">Hospital</th>
+                <th className="text-left px-5 py-4 font-semibold">Status</th>
+                <th className="text-left px-5 py-4 font-semibold">Joined On</th>
+                <th className="text-left px-5 py-4 font-semibold">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {doctors.map((doctor) => (
-                <tr
-                  key={doctor.name}
-                  className="border-b border-[#F3F5FA] hover:bg-[#FAFBFF]"
-                >
-                  <td className="px-6 py-4">
+                <tr key={doctor.name} className="border-t border-[#EAEEF6]">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <img
                         src={doctor.image}
                         alt={doctor.name}
-                        className="w-11 h-11 rounded-full object-cover border-2 border-[#E3ECFD]"
+                        className="w-9 h-9 rounded-lg object-cover"
                       />
-                      <span className="font-medium">{doctor.name}</span>
+                      <span className="font-semibold">{doctor.name}</span>
                     </div>
                   </td>
 
-                  <td className="px-4 py-4 text-sm text-[#2B3E64]">
-                    {doctor.speciality}
-                  </td>
+                  <td className="px-5 py-4 text-[#2B3E64]">{doctor.specialty}</td>
+                  <td className="px-5 py-4 text-[#2B3E64]">{doctor.hospital}</td>
 
-                  <td className="px-4 py-4 text-sm text-[#2B3E64]">
-                    {doctor.hospital}
-                  </td>
-
-                  <td className="px-4 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        doctor.status === 'Approved'
-                          ? 'bg-green-100 text-green-700'
-                          : doctor.status === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${statusClass(doctor.status)}`}>
+                      {statusIcon(doctor.status)}
                       {doctor.status}
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 text-sm text-[#2B3E64]">
-                    {doctor.date}
-                  </td>
+                  <td className="px-5 py-4 text-[#2B3E64]">{doctor.joined}</td>
 
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button className="text-[#1B60E0]">
-                        <FaEye />
-                      </button>
-                      <button className="text-[#1B60E0]">
-                        <FaEdit />
-                      </button>
-                      <button className="text-red-500">
-                        <FaTrash />
-                      </button>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3 text-[#1B60E0]">
+                      <FaEye />
+                      <FaPen />
                     </div>
                   </td>
                 </tr>
@@ -188,31 +144,17 @@ export default function DoctorsPage() {
             </tbody>
           </table>
 
-          <div className="flex items-center justify-between px-6 py-4">
-            <p className="text-sm text-[#889ABF]">
-              Showing 1 to 4 of 1,248 entries
+          <div className="flex items-center justify-between px-5 py-4 border-t border-[#EAEEF6]">
+            <p className="text-xs text-[#2B3E64]">
+              Showing 1 to 7 of 1,248 entries
             </p>
 
             <div className="flex items-center gap-2">
-              <button className="w-9 h-9 rounded-lg border border-[#EAEEF6] flex items-center justify-center">
-                <FaChevronLeft size={10} />
-              </button>
-
-              <button className="w-9 h-9 rounded-lg bg-[#1B60E0] text-white text-sm font-semibold">
-                1
-              </button>
-
-              <button className="w-9 h-9 rounded-lg border border-[#EAEEF6] text-sm">
-                2
-              </button>
-
-              <button className="w-9 h-9 rounded-lg border border-[#EAEEF6] text-sm">
-                3
-              </button>
-
-              <button className="w-9 h-9 rounded-lg border border-[#EAEEF6] flex items-center justify-center">
-                <FaChevronRight size={10} />
-              </button>
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">‹</button>
+              <button className="w-8 h-8 rounded-lg bg-[#1B60E0] text-white">1</button>
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">2</button>
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">3</button>
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">›</button>
             </div>
           </div>
         </section>
