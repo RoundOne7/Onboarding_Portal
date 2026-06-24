@@ -130,6 +130,7 @@ import { MdOutlineLocalHospital } from 'react-icons/md'
 import { BiChevronRight, BiChevronLeft } from 'react-icons/bi'
 import { FaKitMedical, FaQ, FaQuestion } from 'react-icons/fa6'
 import { supabase } from '@/src/lib/supabase'
+import { TbFile, TbFile3D, TbFileReport } from 'react-icons/tb'
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsCollapsed: (collapsed: boolean) => void }) {
   const pathname = usePathname()
@@ -221,6 +222,20 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
             {!isCollapsed && <span className="flex-1 text-sm whitespace-nowrap">Doctors</span>}
             {!isCollapsed && !isActive('/doctors') && <BiChevronRight size={18} className="text-gray-400" />}
           </Link>
+
+          <Link 
+            href="/reports"
+            className={`flex items-center py-3.5 rounded-xl font-medium transition-colors ${
+              isActive('/reports') 
+                ? 'bg-blue-50 text-blue-600' 
+                : 'text-gray-500 hover:text-slate-800 hover:bg-gray-100 hover:scale-110 transition-all duration-200'
+            } ${isCollapsed ? 'justify-center px-0' : 'px-4 gap-3'}`}
+          >
+            <TbFile size={22} className="min-w-[22px]" />
+            {!isCollapsed && <span className="flex-1 text-sm whitespace-nowrap">Reports</span>}
+            {!isCollapsed && !isActive('/reports') && <BiChevronRight size={18} className="text-gray-400" />}
+          </Link>
+
 
           <Link 
             href="/settings"
