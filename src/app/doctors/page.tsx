@@ -150,11 +150,17 @@ export default function DoctorsPage() {
             </p>
 
             <div className="flex items-center gap-2">
-              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">‹</button>
-              <button className="w-8 h-8 rounded-lg bg-[#1B60E0] text-white">1</button>
-              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">2</button>
-              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">3</button>
-              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">›</button>
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">
+                ‹
+              </button>
+
+              <button className="w-8 h-8 rounded-lg bg-[#1B60E0] text-white">
+                1
+              </button>
+
+              <button className="w-8 h-8 rounded-lg border border-[#EAEEF6] text-[#2B3E64]">
+                ›
+              </button>
             </div>
           </div>
         </section>
