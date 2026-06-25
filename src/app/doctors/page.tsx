@@ -146,7 +146,7 @@ export default function DoctorsPage() {
 
           <div className="flex items-center justify-between px-5 py-4 border-t border-[#EAEEF6]">
             <p className="text-xs text-[#2B3E64]">
-              Showing 1 to 7 of 1,248 entries
+  
             </p>
 
             <div className="flex items-center gap-2">
