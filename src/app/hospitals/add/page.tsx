@@ -1,441 +1,3 @@
-// 'use client'
-
-// import { useState } from 'react'
-
-// import { useRouter } from 'next/navigation'
-
-// import { supabase } from '../../../lib/supabase'
-
-// export default function AddHospitalPage() {
-
-//     const router = useRouter()
-
-//     const [name, setName] =
-//         useState('')
-
-//     const [address, setAddress] =
-//         useState('')
-
-//     const [city, setCity] =
-//         useState('')
-
-//     const [state, setState] =
-//         useState('')
-
-//     const [phone, setPhone] =
-//         useState('')
-
-//     const [email, setEmail] =
-//         useState('')
-
-//     const [loading, setLoading] =
-//         useState(false)
-
-//     async function handleAddHospital() {
-
-//         if (
-//             !name ||
-//             !address ||
-//             !city ||
-//             !state
-//         ) {
-
-//             alert(
-//                 'Please fill required fields'
-//             )
-
-//             return
-//         }
-
-//         setLoading(true)
-
-//         const { error } =
-//             await supabase
-
-//                 .from('hospitals')
-
-//                 .insert([
-//                     {
-//                         name,
-//                         address,
-//                         city,
-//                         state,
-//                         phone,
-//                         email
-//                     }
-//                 ])
-
-//         setLoading(false)
-
-//         if (error) {
-
-//             alert(error.message)
-
-//             return
-//         }
-
-//         router.push('/hospitals')
-//     }
-
-//     return (
-
-//         <main
-//             className='
-//                 min-h-screen
-//                 bg-gray-100
-//                 p-8
-//             '
-//         >
-
-//             <div
-//                 className='
-//                     max-w-3xl
-//                     mx-auto
-//                     bg-white
-//                     rounded-3xl
-//                     shadow-sm
-//                     border
-//                     border-gray-100
-//                     p-10
-//                 '
-//             >
-
-//                 <div className='mb-10'>
-
-//                     <h1
-//                         className='
-//                             text-4xl
-//                             font-bold
-//                             text-gray-900
-//                         '
-//                     >
-
-//                         Add Hospital
-
-//                     </h1>
-
-//                     <p
-//                         className='
-//                             text-gray-500
-//                             mt-3
-//                         '
-//                     >
-
-//                         Create a new hospital
-//                         or healthcare center
-
-//                     </p>
-
-//                 </div>
-
-//                 <div className='space-y-6'>
-
-//                     <div>
-
-//                         <label
-//                             className='
-//                                 block
-//                                 text-sm
-//                                 font-semibold
-//                                 text-gray-700
-//                                 mb-2
-//                             '
-//                         >
-
-//                             Hospital Name *
-
-//                         </label>
-
-//                         <input
-//                             type='text'
-
-//                             value={name}
-
-//                             onChange={(e) =>
-//                                 setName(e.target.value)
-//                             }
-
-//                             className='
-//                                 w-full
-//                                 border
-//                                 border-gray-200
-//                                 rounded-2xl
-//                                 px-5
-//                                 py-4
-//                                 outline-none
-//                                 focus:border-black
-//                             '
-
-//                             placeholder='Apollo Hospital'
-//                         />
-
-//                     </div>
-
-//                     <div>
-
-//                         <label
-//                             className='
-//                                 block
-//                                 text-sm
-//                                 font-semibold
-//                                 text-gray-700
-//                                 mb-2
-//                             '
-//                         >
-
-//                             Address *
-
-//                         </label>
-
-//                         <textarea
-
-//                             value={address}
-
-//                             onChange={(e) =>
-//                                 setAddress(e.target.value)
-//                             }
-
-//                             rows={4}
-
-//                             className='
-//                                 w-full
-//                                 border
-//                                 border-gray-200
-//                                 rounded-2xl
-//                                 px-5
-//                                 py-4
-//                                 outline-none
-//                                 focus:border-black
-//                             '
-
-//                             placeholder='Hospital address'
-//                         />
-
-//                     </div>
-
-//                     <div
-//                         className='
-//                             grid
-//                             grid-cols-1
-//                             md:grid-cols-2
-//                             gap-6
-//                         '
-//                     >
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     text-gray-700
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 City *
-
-//                             </label>
-
-//                             <input
-//                                 type='text'
-
-//                                 value={city}
-
-//                                 onChange={(e) =>
-//                                     setCity(e.target.value)
-//                                 }
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                     focus:border-black
-//                                 '
-
-//                                 placeholder='Mumbai'
-//                             />
-
-//                         </div>
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     text-gray-700
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 State *
-
-//                             </label>
-
-//                             <input
-//                                 type='text'
-
-//                                 value={state}
-
-//                                 onChange={(e) =>
-//                                     setState(e.target.value)
-//                                 }
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                     focus:border-black
-//                                 '
-
-//                                 placeholder='Maharashtra'
-//                             />
-
-//                         </div>
-
-//                     </div>
-
-//                     <div
-//                         className='
-//                             grid
-//                             grid-cols-1
-//                             md:grid-cols-2
-//                             gap-6
-//                         '
-//                     >
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     text-gray-700
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 Phone
-
-//                             </label>
-
-//                             <input
-//                                 type='text'
-
-//                                 value={phone}
-
-//                                 onChange={(e) =>
-//                                     setPhone(e.target.value)
-//                                 }
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                     focus:border-black
-//                                 '
-
-//                                 placeholder='+91 9876543210'
-//                             />
-
-//                         </div>
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     text-gray-700
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 Email
-
-//                             </label>
-
-//                             <input
-//                                 type='email'
-
-//                                 value={email}
-
-//                                 onChange={(e) =>
-//                                     setEmail(e.target.value)
-//                                 }
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                     focus:border-black
-//                                 '
-
-//                                 placeholder='hospital@email.com'
-//                             />
-
-//                         </div>
-
-//                     </div>
-
-//                     <button
-
-//                         onClick={handleAddHospital}
-
-//                         disabled={loading}
-
-//                         className='
-//                             w-full
-//                             bg-black
-//                             text-white
-//                             py-4
-//                             rounded-2xl
-//                             font-semibold
-//                             text-lg
-//                             hover:opacity-90
-//                             transition
-//                         '
-//                     >
-
-//                         {
-//                             loading
-
-//                                 ? 'Creating Hospital...'
-
-//                                 : 'Add Hospital'
-//                         }
-
-//                     </button>
-
-//                 </div>
-
-//             </div>
-
-//         </main>
-//     )
-// }
-
 'use client'
 
 import { useState } from 'react'
@@ -569,125 +131,192 @@ export default function AddHospitalPage() {
     const renderFormContent = () => {
         switch (currentStep) {
             case 1:
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Name <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Enter hospital name' value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Type <span className="text-red-500">*</span></label>
-                            <select value={hospitalType} onChange={(e) => setHospitalType(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
-                                <option value=''>Select type</option>
-                                <option value='General'>General Hospital</option>
-                                <option value='Specialty'>Specialty Clinic</option>
-                                <option value='Multi-Specialty'>Multi-Specialty</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Enter registration number' value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Year of Establishment</label>
-                            <select value={yearOfEstablishment} onChange={(e) => setYearOfEstablishment(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
-                                <option value=''>Select year</option>
-                                {Array.from({ length: new Date().getFullYear() - 1949 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Number of Beds</label>
-                            <input 
-                                type="text" 
-                                inputMode="numeric" 
-                                pattern="[0-9]*"
-                                placeholder="Enter number of beds" 
-                                value={numberOfBeds}
-                                onChange={(e) => {
-                                // Only allow digits to be typed
-                                const onlyNumbers = e.target.value.replace(/\D/g, '')
-                                setNumberOfBeds(onlyNumbers)
-                                }}
-                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:scale-102" 
-                            />
-                        </div>
-                        <div className="md:col-span-2 mt-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Hospital Logo</label>
-                            <button className="flex items-center gap-2 border border-blue-100 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-100 transition-colors hover:scale-102"><FiUploadCloud size={18} />Upload Logo</button>
-                            <p className="text-[11px] text-gray-400 mt-2 font-medium">JPG, PNG or SVG (Max. 2MB)</p>
-                        </div>
-                    </div>
-                )
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Name <span className="text-red-500">*</span></label>
+                <input 
+                    type='text' 
+                    placeholder='Enter hospital name' 
+                    value={name} 
+                    onChange={(e) => {
+                        // Allows letters, numbers, spaces, hyphens, and apostrophes
+                        const filtered = e.target.value.replace(/[^a-zA-Z0-9 \-']/g, '')
+                        setName(filtered)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Hospital Type <span className="text-red-500">*</span></label>
+                <select value={hospitalType} onChange={(e) => setHospitalType(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
+                    <option value=''>Select type</option>
+                    <option value='General'>General Hospital</option>
+                    <option value='Specialty'>Specialty Clinic</option>
+                    <option value='Multi-Specialty'>Multi-Specialty</option>
+                </select>
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
+                <input 
+                    type='text' 
+                    inputMode="numeric"
+                    placeholder='Enter registration number' 
+                    value={registrationNumber} 
+                    onChange={(e) => {
+                        // Strictly numbers only
+                        const onlyNumbers = e.target.value.replace(/\D/g, '')
+                        setRegistrationNumber(onlyNumbers)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Year of Establishment</label>
+                <select value={yearOfEstablishment} onChange={(e) => setYearOfEstablishment(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white hover:scale-102">
+                    <option value=''>Select year</option>
+                    {Array.from({ length: new Date().getFullYear() - 1949 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Number of Beds</label>
+                <input 
+                    type="text" 
+                    inputMode="numeric" 
+                    pattern="[0-9]*"
+                    placeholder="Enter number of beds" 
+                    value={numberOfBeds}
+                    onChange={(e) => {
+                        // Only allow digits to be typed
+                        const onlyNumbers = e.target.value.replace(/\D/g, '')
+                        setNumberOfBeds(onlyNumbers)
+                    }}
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:scale-102" 
+                />
+            </div>
+            <div className="md:col-span-2 mt-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">Hospital Logo</label>
+                <button className="flex items-center gap-2 border border-blue-100 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-100 transition-colors hover:scale-102"><FiUploadCloud size={18} />Upload Logo</button>
+                <p className="text-[11px] text-gray-400 mt-2 font-medium">JPG, PNG or SVG (Max. 2MB)</p>
+            </div>
+        </div>
+    )
             case 2:
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Official Email <span className="text-red-500">*</span></label>
-                            <input type='email' placeholder='hospital@email.com' value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2 ">
-                                Phone Number <span className="text-red-500">*</span>
-                            </label>
-                            <div className="flex gap-2">
-                            {/* Optional: Static Country Code Box */}
-                               <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
-                                    +91
-                                </div>
-                                <input 
-                                    type='tel' 
-                                    maxLength={10}
-                                    placeholder='9876543210' 
-                                    value={phone} 
-                                    onChange={(e) => {
-                                    // This regex replaces anything that is NOT a digit (\D) with an empty string
-                                    const onlyDigits = e.target.value.replace(/\D/g, '')
-                                    setPhone(onlyDigits)
-                                    }} 
-                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
-                                />
-                            </div>
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Website</label>
-                            <input type='url' placeholder='https://www.hospitalwebsite.com' value={website} onChange={(e) => setWebsite(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Official Email <span className="text-red-500">*</span></label>
+                <input 
+                    type='email' 
+                    placeholder='hospital@email.com' 
+                    value={email} 
+                    onChange={(e) => {
+                        // Prevent spaces in email
+                        setEmail(e.target.value.replace(/\s/g, ''))
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2 ">
+                    Phone Number <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                    <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                        +91
                     </div>
-                )
+                    <input 
+                        type='tel' 
+                        maxLength={10}
+                        placeholder='9876543210' 
+                        value={phone} 
+                        onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(/\D/g, '')
+                            setPhone(onlyDigits)
+                        }} 
+                        className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                    />
+                </div>
+            </div>
+            <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Website</label>
+                <input 
+                    type='url' 
+                    placeholder='https://www.hospitalwebsite.com' 
+                    value={website} 
+                    onChange={(e) => {
+                        // Prevent spaces in URL
+                        setWebsite(e.target.value.replace(/\s/g, ''))
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+        </div>
+    )
             case 3:
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Street Address <span className="text-red-500">*</span></label>
-                            <textarea placeholder='Full hospital address' rows={3} value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Mumbai' value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">State <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='Maharashtra' value={state} onChange={(e) => setState(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Zip / Pin Code <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                inputMode="numeric" 
-                                pattern="[0-9]*" 
-                                maxLength={6}
-                                placeholder='400001' 
-                                value={zipCode} 
-                                onChange={(e) => {
-                                // Strip out any non-digit characters
-                                const onlyNumbers = e.target.value.replace(/\D/g, '')
-                                setZipCode(onlyNumbers)
-                                }} 
-                                className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
-                            />
-                        </div>
-                    </div>
-                )
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Street Address <span className="text-red-500">*</span></label>
+                <textarea 
+    placeholder='Full hospital address' 
+    rows={3} 
+    value={address} 
+    onChange={(e) => {
+        // Allows letters, numbers, spaces, commas, periods, hyphens, slashes, and hash signs.
+        // Blocks everything else (like @, !, $, %, *, ?, etc.)
+        const filtered = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+        setAddress(filtered)
+    }} 
+    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+/>
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
+                <input 
+                    type='text' 
+                    placeholder='Mumbai' 
+                    value={city} 
+                    onChange={(e) => {
+                        // Strictly letters and spaces
+                        const filtered = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+                        setCity(filtered)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">State <span className="text-red-500">*</span></label>
+                <input 
+                    type='text' 
+                    placeholder='Maharashtra' 
+                    value={state} 
+                    onChange={(e) => {
+                        // Strictly letters and spaces
+                        const filtered = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+                        setState(filtered)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Zip / Pin Code <span className="text-red-500">*</span></label>
+                <input 
+                    type="text" 
+                    inputMode="numeric" 
+                    pattern="[0-9]*" 
+                    maxLength={6}
+                    placeholder='400001' 
+                    value={zipCode} 
+                    onChange={(e) => {
+                        const onlyNumbers = e.target.value.replace(/\D/g, '')
+                        setZipCode(onlyNumbers)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+        </div>
+    )
             case 4:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
@@ -754,41 +383,58 @@ export default function AddHospitalPage() {
         </div>
                 )
             case 5:
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Primary Admin Name <span className="text-red-500">*</span></label>
-                            <input type='text' placeholder='John Doe' value={adminName} onChange={(e) => setAdminName(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Admin Email <span className="text-red-500">*</span></label>
-                            <input type='email' placeholder='admin@hospital.com' value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Admin Phone Number <span className="text-red-500">*</span>
-                            </label>
-                            <div className="flex gap-2">
-                            {/* Optional: Static Country Code Box */}
-                               <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
-                                    +91
-                                </div>
-                                <input 
-                                    type='tel' 
-                                    maxLength={10}
-                                    placeholder='9876543210' 
-                                    value={phone} 
-                                    onChange={(e) => {
-                                    // This regex replaces anything that is NOT a digit (\D) with an empty string
-                                    const onlyDigits = e.target.value.replace(/\D/g, '')
-                                    setPhone(onlyDigits)
-                                    }} 
-                                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
-                                />
-                            </div>
-                        </div>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Primary Admin Name <span className="text-red-500">*</span></label>
+                <input 
+                    type='text' 
+                    placeholder='John Doe' 
+                    value={adminName} 
+                    onChange={(e) => {
+                        // Strictly letters and spaces
+                        const filtered = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+                        setAdminName(filtered)
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Admin Email <span className="text-red-500">*</span></label>
+                <input 
+                    type='email' 
+                    placeholder='admin@hospital.com' 
+                    value={adminEmail} 
+                    onChange={(e) => {
+                        // Prevent spaces
+                        setAdminEmail(e.target.value.replace(/\s/g, ''))
+                    }} 
+                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Admin Phone Number <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                    <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
+                        +91
                     </div>
-                )
+                    <input 
+                        type='tel' 
+                        maxLength={10}
+                        placeholder='9876543210' 
+                        value={adminPhone} // Fixed: I changed this from {phone} to {adminPhone} for you!
+                        onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(/\D/g, '')
+                            setAdminPhone(onlyDigits)
+                        }} 
+                        className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                    />
+                </div>
+            </div>
+        </div>
+    )
             case 6:
                 return (
                     <div className="flex flex-col items-center justify-center py-10 w-full animate-in fade-in zoom-in-95 duration-300">
