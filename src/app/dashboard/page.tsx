@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
+import { supabase } from '../../lib/supabase'
 import {
   FaUserMd,
   FaHospital,
@@ -20,14 +21,34 @@ export default function DashboardPage() {
     locations: '...'
   })
 
+  const [userName, setUserName] = useState('User')
+
   useEffect(() => {
-    setTimeout(() => {
-      setStats({
-        doctors: '1,248',
-        hospitals: '312',
-        locations: '86'
-      })
-    }, 500)
+    const loadDashboard = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const name =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split('@')[0] ||
+          'User'
+
+        setUserName(name)
+      }
+
+      setTimeout(() => {
+        setStats({
+          doctors: '1,248',
+          hospitals: '312',
+          locations: '86'
+        })
+      }, 500)
+    }
+
+    loadDashboard()
   }, [])
 
   const hospitals = [
@@ -64,7 +85,7 @@ export default function DashboardPage() {
         <header className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
           <div>
             <h1 className="text-[28px] leading-tight font-bold text-[#0B1528]">
-              Welcome Back, User_Name 👋
+              Welcome Back, {userName} 👋
             </h1>
             <p className="text-[#2B3E64] mt-2 text-[15px]">
               Here&apos;s what&apos;s happening with your platform today.
@@ -72,11 +93,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3 bg-white border border-[#EAEEF6] rounded-2xl px-4 py-3 shadow-sm">
-            <div className="w-10 h-10 rounded-full bg-[#E3ECFD] flex items-center justify-center font-bold text-[#0B1528]">
-              U
+            <div className="w-10 h-10 rounded-full bg-[#E3ECFD] flex items-center justify-center font-bold text-[#0B1528] uppercase">
+              {userName.charAt(0)}
             </div>
             <div>
-              <p className="font-semibold text-sm text-[#0B1528]">User Name</p>
+              <p className="font-semibold text-sm text-[#0B1528]">{userName}</p>
               <p className="text-xs text-[#2B3E64]">Super Admin</p>
             </div>
             <span className="text-[#2B3E64] text-xs">⌄</span>
