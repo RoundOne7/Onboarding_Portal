@@ -158,18 +158,17 @@ export default function AddHospitalPage() {
             </div>
             <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
-                <input 
-                    type='text' 
-                    inputMode="numeric"
-                    placeholder='Enter registration number' 
-                    value={registrationNumber} 
-                    onChange={(e) => {
-                        // Strictly numbers only
-                        const onlyNumbers = e.target.value.replace(/\D/g, '')
-                        setRegistrationNumber(onlyNumbers)
-                    }} 
-                    className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
-                />
+                    <input 
+                        type='text' 
+                        placeholder='Enter registration number (e.g. REG12345)' 
+                        value={registrationNumber} 
+                        onChange={(e) => {
+                            // Allow only letters and numbers, then immediately convert to uppercase
+                            const formatted = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+                            setRegistrationNumber(formatted)
+                     }} 
+                            className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 hover:scale-102" 
+                    />
             </div>
             <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Year of Establishment</label>
