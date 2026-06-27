@@ -8,7 +8,8 @@ import {
   FaPen,
   FaCheckCircle,
   FaClock,
-  FaTimesCircle
+  FaTimesCircle,
+  FaUserMd
 } from 'react-icons/fa'
 
 export default function DoctorsPage() {
@@ -46,10 +47,15 @@ export default function DoctorsPage() {
       <main className="w-full flex-1 px-6 pt-5 pb-6 text-[#0B1528] h-full overflow-y-auto">
         <section className="flex items-start justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold">Doctors</h1>
-            <p className="text-xs text-[#889ABF] mt-2">
-              Dashboard &gt; Doctors
-            </p>
+            <div className='flex flex-row items-center gap-3'> 
+                                        <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
+                                                  <FaUserMd className="text-lg" />
+                                        </div>
+                                        <h1 className="text-4xl font-bold text-slate-800">Doctors</h1>
+                                    </div>
+           <p className="text-xs text-[#889ABF] mt-1 font-medium">
+                            Dashboard &gt; <span className="text-[#2B3E64]">Doctors</span>
+                        </p>
           </div>
         </section>
 

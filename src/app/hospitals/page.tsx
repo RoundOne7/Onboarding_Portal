@@ -6,6 +6,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout'
 import { supabase } from '../../lib/supabase'
 import {FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaHospitalSymbol} from 'react-icons/fa'
 import { useRouter } from 'next/navigation'
+import { MdOutlineLocalHospital } from 'react-icons/md'
 
 export default function HospitalsPage() {
     const router = useRouter()
@@ -85,7 +86,12 @@ export default function HospitalsPage() {
                 {/* --- HEADER --- */}
                 <section className="flex items-start justify-between mb-5">
                     <div>
-                        <h1 className="text-2xl font-bold">Hospitals</h1>
+                        <div className='flex flex-row items-center gap-3'> 
+                                                    <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
+                                                              <MdOutlineLocalHospital className="text-lg" />
+                                                    </div>
+                                                    <h1 className="text-4xl font-bold text-slate-800">Hospitals</h1>
+                                                </div>
                         <p className="text-xs text-[#889ABF] mt-2 font-medium">
                             Dashboard &gt; <span className="text-[#2B3E64]">Hospitals</span>
                         </p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { FiSettings } from 'react-icons/fi'
 import DashboardLayout
     from '../../components/layout/DashboardLayout'
 
@@ -9,39 +10,22 @@ export default function SettingsPage() {
 
         <DashboardLayout>
 
-            <main
-                className='
-                    p-8
-                    bg-gray-100
-                    min-h-screen
-                '
-            >
+            <main className='w-full flex-1 px-6 pt-5 pb-6 text-[#0B1528] h-full overflow-y-auto'>
 
                 {/* HEADER */}
 
                 <div className='mb-8'>
 
-                    <h1
-                        className='
-                            text-4xl
-                            font-bold
-                            text-gray-900
-                        '
-                    >
+                    <div className='flex flex-row items-center gap-3'> 
+                                                                        <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
+                                                                                  <FiSettings className="text-lg" />
+                                                                        </div>
+                                                                        <h1 className="text-4xl font-bold text-slate-800">Settings</h1>
+                                                                    </div>
 
-                        Settings
-
-                    </h1>
-
-                    <p
-                        className='
-                            text-gray-500
-                            mt-2
-                        '
-                    >
-
-                        Configure portal settings
-                    </p>
+                    <p className="text-xs text-[#889ABF] mt-1 font-medium">
+                            Dashboard &gt; <span className="text-[#2B3E64]">Settings</span>
+                        </p>
 
                 </div>
 

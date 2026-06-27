@@ -99,10 +99,10 @@ export default function ReportsPage() {
                 <section className="flex flex-col sm:flex-row sm:items-start justify-between mb-8 gap-4">
                     <div>
                         <div className='flex flex-row items-center gap-3'> 
-                            <div className="min-w-[32px] w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
+                            <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
                                       <FaQuestion className="text-lg" />
                             </div>
-                            <h1 className="text-[22px] font-bold text-slate-800">Reports</h1>
+                            <h1 className="text-4xl font-bold text-slate-800">Reports</h1>
                         </div>
                        
                         <p className="text-xs text-[#889ABF] mt-1 font-medium">
