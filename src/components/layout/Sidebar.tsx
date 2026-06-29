@@ -146,7 +146,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
       <div className="px-4 mt-auto">
         <button 
           onClick={logout}
-          className={`flex items-center w-full py-3.5 rounded-xl font-medium text-red-500 hover:bg-red-100 transition-colors hover:scale-110 ${
+          className={`flex items-center w-full py-3.5 rounded-xl font-medium text-red-500 hover:bg-red-100 transition-all hover:scale-110 duration-200 ${
             isCollapsed ? 'justify-center px-0' : 'px-4 gap-3'
           }`}
         >

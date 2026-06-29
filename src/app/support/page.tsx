@@ -98,7 +98,7 @@ export default function SupportPage() {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    className="h-12 px-8 rounded-xl bg-[#0066FF] hover:bg-blue-700 text-white text-sm font-semibold flex items-center gap-2 transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="h-12 px-8 rounded-xl bg-[#0066FF] hover:bg-blue-700/100 text-white text-sm font-semibold flex items-center gap-2 transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed hover:scale-110 transition-transform duration-300"
                                 >
                                     {isSubmitting ? (
                                         'Sending...'
@@ -121,7 +121,7 @@ export default function SupportPage() {
                             <h2 className="text-base font-bold text-slate-800 mb-5">Other ways to connect</h2>
                             
                             <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group">
+                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group hover:scale-110 transition-transform duration-300">
                                     <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0066FF] flex items-center justify-center shrink-0 group-hover:bg-[#0066FF] group-hover:text-white transition-colors">
                                         <FiMail size={18} />
                                     </div>
@@ -131,7 +131,7 @@ export default function SupportPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group">
+                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group hover:scale-110 transition-transform duration-300">
                                     <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0 group-hover:bg-green-600 group-hover:text-white transition-colors">
                                         <FiPhone size={18} />
                                     </div>
@@ -141,7 +141,7 @@ export default function SupportPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group">
+                                <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 cursor-pointer group hover:scale-110 transition-transform duration-300">
                                     <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                                         <FiMessageCircle size={18} />
                                     </div>
