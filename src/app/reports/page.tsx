@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { supabase } from '../../lib/supabase'
-import { FaArrowUp, FaArrowDown,FaQuestion } from 'react-icons/fa'
+import { FaArrowUp, FaArrowDown, FaQuestion } from 'react-icons/fa'
 import {
   AreaChart,
   Area,
@@ -13,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { motion } from 'framer-motion'
 
 export default function ReportsPage() {
     const [loading, setLoading] = useState(true)
@@ -31,6 +32,21 @@ export default function ReportsPage() {
 
     useEffect(() => {
         fetchAnalytics()
+
+        const channel = supabase
+            .channel('appointments-realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'appointments' },
+                () => {
+                    fetchAnalytics()
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }, [])
 
     async function fetchAnalytics() {
@@ -46,7 +62,7 @@ export default function ReportsPage() {
             // 1. Calculate KPIs
             let completed = 0, pending = 0, cancelled = 0, noShow = 0;
             
-            appointments.forEach(app => {
+            appointments.forEach((app: any) => {
                 const status = app.status?.toLowerCase() || ''
                 if (status === 'completed') completed++
                 else if (status === 'pending') pending++
@@ -65,15 +81,13 @@ export default function ReportsPage() {
             // 2. Process Data for the Chart (Group by Date)
             const dateGroups: Record<string, number> = {}
             
-            appointments.forEach(app => {
-                // Extract just the "DD MMM" part of the date (e.g., "12 May")
+            appointments.forEach((app: any) => {
                 const dateObj = new Date(app.created_at || app.appointment_date)
                 const dateKey = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
                 
                 dateGroups[dateKey] = (dateGroups[dateKey] || 0) + 1
             })
 
-            // Convert grouped object to array for Recharts
             const formattedChartData = Object.keys(dateGroups).map(date => ({
                 date,
                 appointments: dateGroups[date]
@@ -85,7 +99,6 @@ export default function ReportsPage() {
         setLoading(false)
     }
 
-    // Helper to calculate percentages safely
     const getPercent = (value: number) => {
         if (kpis.total === 0) return '0.0%'
         return ((value / kpis.total) * 100).toFixed(1) + '%'
@@ -93,97 +106,146 @@ export default function ReportsPage() {
 
     return (
         <DashboardLayout>
-            <main className="w-full flex-1 px-6 pt-5 pb-6 text-[#0B1528] h-full overflow-y-auto bg-[#f8fafc]">
+            <main className="w-full flex-1 px-8 pt-6 pb-8 text-[#0B1528] h-full overflow-y-auto bg-[#f5f7fb]">
                 
                 {/* --- HEADER --- */}
-                <section className="flex flex-col sm:flex-row sm:items-start justify-between mb-8 gap-4">
+                <motion.section 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col sm:flex-row sm:items-start justify-between mb-8 gap-4"
+                >
                     <div>
-                        <div className='flex flex-row items-center gap-3'> 
-                            <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
-                                      <FaQuestion className="text-lg" />
+                        <div className="flex flex-row items-center gap-3"> 
+                            <div className="min-w-[36px] w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-xl shadow-md shadow-blue-500/10">
+                                <FaQuestion className="text-base" />
                             </div>
-                            <h1 className="text-4xl font-bold text-slate-800">Reports</h1>
+                            <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Reports</h1>
                         </div>
                        
-                        <p className="text-xs text-[#889ABF] mt-1 font-medium">
+                        <p className="text-xs text-[#889ABF] mt-2 font-bold">
                             Dashboard &gt; <span className="text-[#2B3E64]">Reports</span>
                         </p>
                     </div>
                     
                     {/* Top Controls */}
-                    <div className="flex items-center gap-3 text-sm">
-                        <select className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-lg text-slate-600 font-medium outline-none focus:border-blue-500 shadow-sm cursor-pointer">
+                    <div className="flex items-center gap-3 text-sm font-semibold">
+                        <select className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-xl text-slate-600 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
                             <option>Appointment Report</option>
                             <option>Onboarding Report</option>
                         </select>
-                        <select className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-lg text-slate-600 font-medium outline-none focus:border-blue-500 shadow-sm cursor-pointer">
+                        <select className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-xl text-slate-600 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
                             <option>This Month</option>
                             <option>Last Month</option>
                             <option>Year to Date</option>
                         </select>
-                        <button className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-lg text-slate-600 font-medium hover:bg-gray-50 shadow-sm transition-colors">
+                        <button className="px-4 py-2 bg-white border border-[#EAEEF6] rounded-xl text-[#2B3E64] hover:bg-slate-50 shadow-sm transition-colors cursor-pointer">
                             Export
                         </button>
                     </div>
-                </section>
+                </motion.section>
 
                 {/* --- KPI CARDS --- */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <motion.section 
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                        hidden: {},
+                        visible: {
+                            transition: {
+                                staggerChildren: 0.08
+                            }
+                        }
+                    }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+                >
                     {/* Total Appointments */}
-                    <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                        <h3 className="text-sm font-semibold text-[#889ABF] mb-4">Total Appointments</h3>
+                    <motion.div 
+                        variants={{
+                            hidden: { opacity: 0, y: 15 },
+                            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+                        }}
+                        whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
+                        className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex flex-col justify-between cursor-pointer transition-all duration-300"
+                    >
+                        <h3 className="text-xs font-bold text-[#889ABF] uppercase tracking-wider mb-4">Total Appointments</h3>
                         <div>
-                            <div className="text-3xl font-bold text-slate-800 mb-2">{loading ? '-' : kpis.total.toLocaleString()}</div>
-                            <div className="flex items-center text-xs font-semibold text-green-600">
-                                <FaArrowUp className="mr-1" /> 15.3% <span className="text-slate-400 ml-1 font-medium">vs last month</span>
+                            <div className="text-3xl font-extrabold text-slate-800 mb-2">{loading ? '-' : kpis.total.toLocaleString()}</div>
+                            <div className="flex items-center text-xs font-bold text-green-600">
+                                <FaArrowUp className="mr-1" /> 15.3% <span className="text-slate-400 ml-1.5 font-semibold">vs last month</span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Completed */}
-                    <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                        <h3 className="text-sm font-semibold text-[#889ABF] mb-4">Completed</h3>
+                    <motion.div 
+                        variants={{
+                            hidden: { opacity: 0, y: 15 },
+                            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+                        }}
+                        whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
+                        className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex flex-col justify-between cursor-pointer transition-all duration-300"
+                    >
+                        <h3 className="text-xs font-bold text-[#889ABF] uppercase tracking-wider mb-4">Completed</h3>
                         <div>
-                            <div className="text-3xl font-bold text-slate-800 mb-2">{loading ? '-' : kpis.completed.toLocaleString()}</div>
-                            <div className="flex items-center text-xs font-semibold text-green-600">
-                                <FaArrowUp className="mr-1" /> 13.8%
+                            <div className="text-3xl font-extrabold text-slate-800 mb-2">{loading ? '-' : kpis.completed.toLocaleString()}</div>
+                            <div className="flex items-center text-xs font-bold text-green-600">
+                                <FaArrowUp className="mr-1" /> 13.8% <span className="text-slate-400 ml-1.5 font-semibold">completed</span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Pending */}
-                    <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                        <h3 className="text-sm font-semibold text-[#889ABF] mb-4">Pending</h3>
+                    <motion.div 
+                        variants={{
+                            hidden: { opacity: 0, y: 15 },
+                            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+                        }}
+                        whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
+                        className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex flex-col justify-between cursor-pointer transition-all duration-300"
+                    >
+                        <h3 className="text-xs font-bold text-[#889ABF] uppercase tracking-wider mb-4">Pending</h3>
                         <div>
-                            <div className="text-3xl font-bold text-slate-800 mb-2">{loading ? '-' : kpis.pending.toLocaleString()}</div>
-                            <div className="flex items-center text-xs font-semibold text-red-500">
-                                <FaArrowDown className="mr-1" /> 2.2%
+                            <div className="text-3xl font-extrabold text-slate-800 mb-2">{loading ? '-' : kpis.pending.toLocaleString()}</div>
+                            <div className="flex items-center text-xs font-bold text-amber-500">
+                                <FaArrowDown className="mr-1" /> 2.2% <span className="text-slate-400 ml-1.5 font-semibold">in queue</span>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Cancelled */}
-                    <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                        <h3 className="text-sm font-semibold text-[#889ABF] mb-4">Cancelled</h3>
+                    <motion.div 
+                        variants={{
+                            hidden: { opacity: 0, y: 15 },
+                            visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+                        }}
+                        whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
+                        className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex flex-col justify-between cursor-pointer transition-all duration-300"
+                    >
+                        <h3 className="text-xs font-bold text-[#889ABF] uppercase tracking-wider mb-4">Cancelled</h3>
                         <div>
-                            <div className="text-3xl font-bold text-slate-800 mb-2">{loading ? '-' : kpis.cancelled.toLocaleString()}</div>
-                            <div className="flex items-center text-xs font-semibold text-red-500">
-                                <FaArrowDown className="mr-1" /> 2.6%
+                            <div className="text-3xl font-extrabold text-slate-800 mb-2">{loading ? '-' : kpis.cancelled.toLocaleString()}</div>
+                            <div className="flex items-center text-xs font-bold text-red-500">
+                                <FaArrowDown className="mr-1" /> 2.6% <span className="text-slate-400 ml-1.5 font-semibold">cancelled</span>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </motion.div>
+                </motion.section>
 
                 {/* --- BOTTOM SECTION (CHART & STATUS) --- */}
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     
-                    {/* CHART AREA (Takes up 2 columns) */}
-                    <div className="lg:col-span-2 bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm min-h-[400px] flex flex-col">
+                    {/* CHART AREA */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="lg:col-span-2 bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium min-h-[400px] flex flex-col"
+                    >
                         <h3 className="text-base font-bold text-slate-800 mb-6">Appointments Overview</h3>
                         
                         <div className="flex-1 w-full relative">
                             {loading ? (
-                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-medium">
+                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-semibold">
                                     Loading chart data...
                                 </div>
                             ) : chartData.length > 0 ? (
@@ -200,17 +262,17 @@ export default function ReportsPage() {
                                             dataKey="date" 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fontSize: 11, fill: '#889ABF' }} 
+                                            tick={{ fontSize: 11, fill: '#889ABF', fontWeight: 'bold' }} 
                                             dy={10}
                                         />
                                         <YAxis 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fontSize: 11, fill: '#889ABF' }} 
+                                            tick={{ fontSize: 11, fill: '#889ABF', fontWeight: 'bold' }} 
                                         />
                                         <Tooltip 
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
-                                            labelStyle={{ fontWeight: 'bold', color: '#2B3E64', marginBottom: '4px' }}
+                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: 'var(--shadow-premium-hover)' }}
+                                            labelStyle={{ fontWeight: 'extrabold', color: '#0B1528', marginBottom: '4px' }}
                                         />
                                         <Area 
                                             type="monotone" 
@@ -224,77 +286,82 @@ export default function ReportsPage() {
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-medium">
+                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-semibold">
                                     No appointment data available.
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </motion.div>
 
-                    {/* STATUS BREAKDOWN (Takes up 1 column) */}
-                    <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm flex flex-col">
+                    {/* STATUS BREAKDOWN */}
+                    <motion.div 
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex flex-col"
+                    >
                         <h3 className="text-base font-bold text-slate-800 mb-8">By Status</h3>
                         
                         <div className="flex-1 flex flex-col gap-6">
                             {/* Completed Row */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between group cursor-pointer">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 rounded-full border-4 border-blue-500 bg-white"></div>
-                                    <span className="text-sm font-semibold text-slate-700">Completed</span>
+                                    <div className="w-4 h-4 rounded-full border-4 border-blue-500 bg-white group-hover:scale-110 transition-transform"></div>
+                                    <span className="text-sm font-bold text-slate-700">Completed</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-800">{kpis.completed.toLocaleString()}</span>
-                                    <span className="text-xs font-medium text-[#889ABF] w-12 text-right">({getPercent(kpis.completed)})</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{kpis.completed.toLocaleString()}</span>
+                                    <span className="text-xs font-bold text-[#889ABF] w-12 text-right">({getPercent(kpis.completed)})</span>
                                 </div>
                             </div>
 
                             {/* Pending Row */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between group cursor-pointer">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 rounded-full border-4 border-purple-400 bg-white"></div>
-                                    <span className="text-sm font-semibold text-slate-700">Pending</span>
+                                    <div className="w-4 h-4 rounded-full border-4 border-purple-400 bg-white group-hover:scale-110 transition-transform"></div>
+                                    <span className="text-sm font-bold text-slate-700">Pending</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-800">{kpis.pending.toLocaleString()}</span>
-                                    <span className="text-xs font-medium text-[#889ABF] w-12 text-right">({getPercent(kpis.pending)})</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{kpis.pending.toLocaleString()}</span>
+                                    <span className="text-xs font-bold text-[#889ABF] w-12 text-right">({getPercent(kpis.pending)})</span>
                                 </div>
                             </div>
 
                             {/* Cancelled Row */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between group cursor-pointer">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 rounded-full border-4 border-orange-400 bg-white"></div>
-                                    <span className="text-sm font-semibold text-slate-700">Cancelled</span>
+                                    <div className="w-4 h-4 rounded-full border-4 border-orange-400 bg-white group-hover:scale-110 transition-transform"></div>
+                                    <span className="text-sm font-bold text-slate-700">Cancelled</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-800">{kpis.cancelled.toLocaleString()}</span>
-                                    <span className="text-xs font-medium text-[#889ABF] w-12 text-right">({getPercent(kpis.cancelled)})</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{kpis.cancelled.toLocaleString()}</span>
+                                    <span className="text-xs font-bold text-[#889ABF] w-12 text-right">({getPercent(kpis.cancelled)})</span>
                                 </div>
                             </div>
 
                             {/* No Show Row */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between group cursor-pointer">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-4 h-4 rounded-full border-4 border-emerald-600 bg-white"></div>
-                                    <span className="text-sm font-semibold text-slate-700">No Show</span>
+                                    <div className="w-4 h-4 rounded-full border-4 border-emerald-600 bg-white group-hover:scale-110 transition-transform"></div>
+                                    <span className="text-sm font-bold text-slate-700">No Show</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-800">{kpis.noShow.toLocaleString()}</span>
-                                    <span className="text-xs font-medium text-[#889ABF] w-12 text-right">({getPercent(kpis.noShow)})</span>
+                                    <span className="text-sm font-extrabold text-slate-800">{kpis.noShow.toLocaleString()}</span>
+                                    <span className="text-xs font-bold text-[#889ABF] w-12 text-right">({getPercent(kpis.noShow)})</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Total Bottom Row */}
                         <div className="mt-auto pt-6 border-t border-[#EAEEF6] flex items-center justify-between">
-                            <span className="text-sm font-semibold text-[#889ABF]">Total</span>
-                            <span className="text-lg font-bold text-slate-800">{kpis.total.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-[#889ABF]">Total</span>
+                            <span className="text-lg font-extrabold text-slate-800">{kpis.total.toLocaleString()}</span>
                         </div>
-                    </div>
+                    </motion.div>
 
                 </section>
 
             </main>
         </DashboardLayout>
     )
-}
+}

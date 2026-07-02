@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import DashboardLayout from '../../../components/layout/DashboardLayout'
 import { FiUploadCloud } from 'react-icons/fi'
 import { FaQuestion } from 'react-icons/fa'
 
@@ -12,21 +13,19 @@ export default function AddHospitalPage() {
     const [currentStep, setCurrentStep] = useState(1)
     const [loading, setLoading] = useState(false)
 
+    // Form States
     const [name, setName] = useState('')
     const [hospitalType, setHospitalType] = useState('')
     const [registrationNumber, setRegistrationNumber] = useState('')
     const [yearOfEstablishment, setYearOfEstablishment] = useState('')
     const [numberOfBeds, setNumberOfBeds] = useState('')
-
     const [email, setEmail] = useState('')
     const [phone, setPhone] = useState('')
     const [website, setWebsite] = useState('')
-
     const [address, setAddress] = useState('')
     const [city, setCity] = useState('')
     const [state, setState] = useState('')
     const [zipCode, setZipCode] = useState('')
-
     const [adminName, setAdminName] = useState('')
     const [adminEmail, setAdminEmail] = useState('')
     const [adminPhone, setAdminPhone] = useState('')
@@ -36,7 +35,58 @@ export default function AddHospitalPage() {
 
     const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
-    const handleNextStep = () => {
+    // Load draft from localStorage on mount
+    useEffect(() => {
+        const savedDraft = localStorage.getItem('hospital_onboarding_draft')
+        if (savedDraft) {
+            try {
+                const draft = JSON.parse(savedDraft)
+                if (confirm('A draft of your onboarding form was found. Do you want to resume?')) {
+                    setName(draft.name || '')
+                    setHospitalType(draft.hospitalType || '')
+                    setRegistrationNumber(draft.registrationNumber || '')
+                    setYearOfEstablishment(draft.yearOfEstablishment || '')
+                    setNumberOfBeds(draft.numberOfBeds || '')
+                    setEmail(draft.email || '')
+                    setPhone(draft.phone || '')
+                    setWebsite(draft.website || '')
+                    setAddress(draft.address || '')
+                    setCity(draft.city || '')
+                    setState(draft.state || '')
+                    setZipCode(draft.zipCode || '')
+                    setAdminName(draft.adminName || '')
+                    setAdminEmail(draft.adminEmail || '')
+                    setAdminPhone(draft.adminPhone || '')
+                    setCurrentStep(draft.currentStep || 1)
+                } else {
+                    localStorage.removeItem('hospital_onboarding_draft')
+                }
+            } catch (e) {
+                console.error('Failed to parse draft:', e)
+            }
+        }
+    }, [])
+
+    // Autosave draft on step change
+    const saveDraft = (step: number) => {
+        const draft = {
+            name, hospitalType, registrationNumber, yearOfEstablishment, numberOfBeds,
+            email, phone, website, address, city, state, zipCode,
+            adminName, adminEmail, adminPhone, currentStep: step
+        }
+        localStorage.setItem('hospital_onboarding_draft', JSON.stringify(draft))
+    }
+
+    const checkDuplicateRegistration = async (regNum: string) => {
+        const { data, error } = await supabase
+            .from('hospitals')
+            .select('id')
+            .eq('registration_number', regNum)
+            .maybeSingle()
+        return !!data
+    }
+
+    const handleNextStep = async () => {
         if (currentStep === 1) {
             if (!name || !hospitalType || !registrationNumber) {
                 alert('Please fill the required Basic Information fields (*)')
@@ -45,6 +95,14 @@ export default function AddHospitalPage() {
 
             if (name.length < 3) {
                 alert('Hospital name must be at least 3 letters')
+                return
+            }
+
+            setLoading(true)
+            const isDuplicate = await checkDuplicateRegistration(registrationNumber)
+            setLoading(false)
+            if (isDuplicate) {
+                alert('This registration number is already registered in the system.')
                 return
             }
         }
@@ -100,47 +158,94 @@ export default function AddHospitalPage() {
             }
         }
 
-        setCurrentStep((prev) => prev + 1)
+        const nextStep = currentStep + 1
+        setCurrentStep(nextStep)
+        saveDraft(nextStep)
     }
 
     const handlePrevStep = () => {
         if (currentStep > 1) {
-            setCurrentStep((prev) => prev - 1)
+            const prevStep = currentStep - 1
+            setCurrentStep(prevStep)
+            saveDraft(prevStep)
         } else {
             router.push('/hospitals')
         }
     }
 
+    const uploadFile = async (file: File, folder: string) => {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
+        const filePath = `${folder}/${fileName}`
+
+        // In production, we upload to a Supabase storage bucket named "hospital-docs"
+        const { data, error } = await supabase.storage
+            .from('hospital-docs')
+            .upload(filePath, file)
+
+        if (error) {
+            console.error('File upload failed (make sure bucket exists):', error.message)
+            return file.name // Fallback to filename if bucket not provisioned
+        }
+        return filePath
+    }
+
     async function handleFinalSubmit() {
         setLoading(true)
 
-        const { error } = await supabase.from('hospitals').insert([{
-            name,
-            hospital_type: hospitalType,
-            registration_number: registrationNumber,
-            year_established: yearOfEstablishment,
-            number_of_beds: numberOfBeds,
-            email,
-            phone,
-            website,
-            address,
-            city,
-            state,
-            zip_code: zipCode,
-            admin_name: adminName,
-            admin_email: adminEmail,
-            admin_phone: adminPhone
-        }])
+        try {
+            let regCertPath = ''
+            let compDocPath = ''
 
-        setLoading(false)
+            if (registrationCert) {
+                regCertPath = await uploadFile(registrationCert, 'registration')
+            }
+            if (complianceDoc) {
+                compDocPath = await uploadFile(complianceDoc, 'compliance')
+            }
 
-        if (error) {
-            alert(error.message)
-            return
+            const { data, error } = await supabase.from('hospitals').insert([{
+                name,
+                hospital_type: hospitalType,
+                registration_number: registrationNumber,
+                year_established: parseInt(yearOfEstablishment || '0') || null,
+                number_of_beds: parseInt(numberOfBeds || '0') || null,
+                email,
+                phone,
+                website,
+                address,
+                city,
+                state,
+                zip_code: zipCode,
+                admin_name: adminName,
+                admin_email: adminEmail,
+                admin_phone: adminPhone,
+                is_active: false
+            }]).select().single()
+
+            if (error) throw error
+
+            // Log upload & create action in audit_logs
+            const userEmail = (await supabase.auth.getUser()).data.user?.email || 'System'
+            await supabase.from('audit_logs').insert([{
+                user_email: userEmail,
+                action: `Onboarded Hospital: ${name} (Reg: ${registrationNumber})`,
+                affected_table: 'hospitals',
+                affected_id: data.id,
+                ip_address: 'Client Connection',
+                user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server'
+            }])
+
+            // Clear draft
+            localStorage.removeItem('hospital_onboarding_draft')
+
+            alert('Hospital completely added successfully!')
+            router.push('/hospitals')
+        } catch (err: any) {
+            alert(err.message || 'An error occurred during submission.')
+        } finally {
+            setLoading(false)
         }
-
-        alert('Hospital completely added successfully!')
-        router.push('/hospitals')
     }
 
     const steps = [
@@ -248,19 +353,6 @@ export default function AddHospitalPage() {
                                 className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:scale-102"
                             />
                         </div>
-
-                        <div className="md:col-span-2 mt-2">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">
-                                Hospital Logo
-                            </label>
-                            <button className="flex items-center gap-2 border border-blue-100 bg-blue-50 text-blue-600 px-6 py-3 rounded-xl font-medium text-sm hover:bg-blue-100 transition-colors hover:scale-102">
-                                <FiUploadCloud size={18} />
-                                Upload Logo
-                            </button>
-                            <p className="text-[11px] text-gray-400 mt-2 font-medium">
-                                JPG, PNG or SVG (Max. 2MB)
-                            </p>
-                        </div>
                     </div>
                 )
 
@@ -269,11 +361,11 @@ export default function AddHospitalPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Official Email <span className="text-red-500">*</span>
+                                Official Email Address <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="email"
-                                placeholder="hospital@email.com"
+                                placeholder="contact@hospital.com"
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value.replace(/\s/g, ''))
@@ -460,15 +552,15 @@ export default function AddHospitalPage() {
             case 5:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 w-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="md:col-span-2">
+                        <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Primary Admin Name <span className="text-red-500">*</span>
+                                Admin Full Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="John Doe"
+                                placeholder="Enter admin full name"
                                 value={adminName}
-                                maxLength={50}
+                                maxLength={60}
                                 onChange={(e) => {
                                     const filtered = e.target.value.replace(/[^a-zA-Z\s]/g, '')
                                     setAdminName(filtered)
@@ -479,7 +571,7 @@ export default function AddHospitalPage() {
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Admin Email <span className="text-red-500">*</span>
+                                Admin Email Address <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="email"
@@ -494,7 +586,7 @@ export default function AddHospitalPage() {
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Admin Phone Number <span className="text-red-500">*</span>
+                                Admin Phone Number
                             </label>
                             <div className="flex gap-2">
                                 <div className="flex items-center justify-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-xl text-sm font-medium text-slate-600">
@@ -537,91 +629,95 @@ export default function AddHospitalPage() {
     }
 
     return (
-        <div className="flex h-full min-h-[80vh] bg-gray-50/30 w-[90%] mx-auto">
-            <div className="w-64 py-8 pr-8 hidden md:block shrink-0">
-                <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-teal-400 flex items-center justify-center shadow-lg">
-                        <FaQuestion className="text-blue-900" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800 leading-tight">
-                            Quick<span className="text-teal-400">Check</span>
-                        </h1>
-                        <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
-                    </div>
-                </div>
-
-                <div className="relative">
-                    {steps.map((step, index) => (
-                        <div key={step.id} className="flex items-start mb-8 relative">
-                            {index !== steps.length - 1 && (
-                                <div className={`absolute top-8 left-[15px] w-[2px] h-12 transition-colors duration-300 ${currentStep > step.id ? 'bg-[#0066FF]' : 'bg-gray-100'}`}></div>
-                            )}
-
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold z-10 shrink-0 transition-all duration-300 ${
-                                currentStep === step.id ? 'bg-[#0066FF] text-white shadow-md shadow-blue-200 ring-4 ring-blue-50' :
-                                currentStep > step.id ? 'bg-[#0066FF] text-white' : 'bg-gray-100 text-gray-400'
-                            }`}>
-                                {currentStep > step.id ? '✓' : step.id}
+        <DashboardLayout>
+            <main className="w-full flex-1 px-8 pt-6 pb-8 text-[#0B1528] h-full overflow-y-auto">
+                <div className="flex h-full min-h-[80vh] bg-gray-50/30 w-full mx-auto">
+                    <div className="w-64 py-8 pr-8 hidden md:block shrink-0">
+                        <div className="flex items-center gap-3 mb-12">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg text-white font-bold">
+                                H
                             </div>
-
-                            <div className={`ml-4 mt-1.5 text-sm font-medium transition-colors duration-300 ${
-                                currentStep === step.id ? 'text-[#0066FF] font-bold' :
-                                currentStep > step.id ? 'text-slate-800' : 'text-gray-400'
-                            }`}>
-                                {step.label}
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800 leading-tight">
+                                    Quick<span className="text-blue-600">Check</span>
+                                </h1>
+                                <p className="text-xs text-slate-600 font-semibold">Onboarding Portal</p>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
 
-            <div className="flex-1 py-8 pl-4 md:pl-8 border-l border-gray-100 w-full overflow-hidden">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-slate-800 mb-2">Add Hospital</h1>
-                    <div className="text-xs text-gray-500 flex gap-2 font-medium">
-                        <span>Dashboard</span>
-                        <span>›</span>
-                        <span>Hospitals</span>
-                        <span>›</span>
-                        <span className="text-gray-400">Add Hospital</span>
+                        <div className="relative">
+                            {steps.map((step, index) => (
+                                <div key={step.id} className="flex items-start mb-8 relative">
+                                    {index !== steps.length - 1 && (
+                                        <div className={`absolute top-8 left-[15px] w-[2px] h-12 transition-colors duration-300 ${currentStep > step.id ? 'bg-[#0066FF]' : 'bg-gray-100'}`}></div>
+                                    )}
+
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold z-10 shrink-0 transition-all duration-300 ${
+                                        currentStep === step.id ? 'bg-[#0066FF] text-white shadow-md shadow-blue-200 ring-4 ring-blue-50' :
+                                        currentStep > step.id ? 'bg-[#0066FF] text-white' : 'bg-gray-100 text-gray-400'
+                                    }`}>
+                                        {currentStep > step.id ? '✓' : step.id}
+                                    </div>
+
+                                    <div className={`ml-4 mt-1.5 text-sm font-medium transition-colors duration-300 ${
+                                        currentStep === step.id ? 'text-[#0066FF] font-bold' :
+                                        currentStep > step.id ? 'text-slate-800' : 'text-gray-400'
+                                    }`}>
+                                        {step.label}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 py-8 pl-4 md:pl-8 border-l border-gray-100 w-full overflow-hidden">
+                        <div className="mb-6">
+                            <h1 className="text-2xl font-bold text-slate-800 mb-2">Add Hospital</h1>
+                            <div className="text-xs text-gray-500 flex gap-2 font-medium">
+                                <span>Dashboard</span>
+                                <span>›</span>
+                                <span>Hospitals</span>
+                                <span>›</span>
+                                <span className="text-gray-400">Add Hospital</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full min-h-[400px]">
+                            <h2 className="text-lg font-bold text-slate-800 mb-6">
+                                {steps[currentStep - 1].label}
+                            </h2>
+
+                            {renderFormContent()}
+                        </div>
+
+                        <div className="flex justify-between items-center mt-8 w-full">
+                            <button
+                                onClick={handlePrevStep}
+                                className="px-6 py-2.5 border border-gray-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                                {currentStep === 1 ? 'Cancel' : '← Back'}
+                            </button>
+
+                            {currentStep === steps.length ? (
+                                <button
+                                    onClick={handleFinalSubmit}
+                                    disabled={loading}
+                                    className="px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm transition-colors shadow-md shadow-green-500/30 flex items-center gap-2 disabled:opacity-70 cursor-pointer"
+                                >
+                                    {loading ? 'Submitting...' : 'Submit Profile'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleNextStep}
+                                    className="px-8 py-2.5 bg-[#0066FF] hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors shadow-md shadow-blue-500/30 flex items-center gap-2 cursor-pointer"
+                                >
+                                    Next <span>→</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
-
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 w-full min-h-[400px]">
-                    <h2 className="text-lg font-bold text-slate-800 mb-6">
-                        {steps[currentStep - 1].label}
-                    </h2>
-
-                    {renderFormContent()}
-                </div>
-
-                <div className="flex justify-between items-center mt-8 w-full">
-                    <button
-                        onClick={handlePrevStep}
-                        className="px-6 py-2.5 border border-gray-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-gray-200 transition-colors"
-                    >
-                        {currentStep === 1 ? 'Cancel' : '← Back'}
-                    </button>
-
-                    {currentStep === steps.length ? (
-                        <button
-                            onClick={handleFinalSubmit}
-                            disabled={loading}
-                            className="px-8 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm transition-colors shadow-md shadow-green-500/30 flex items-center gap-2 disabled:opacity-70"
-                        >
-                            {loading ? 'Submitting...' : 'Submit Profile'}
-                        </button>
-                    ) : (
-                        <button
-                            onClick={handleNextStep}
-                            className="px-8 py-2.5 bg-[#0066FF] hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors shadow-md shadow-blue-500/30 flex items-center gap-2"
-                        >
-                            Next <span>→</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
+            </main>
+        </DashboardLayout>
     )
 }
