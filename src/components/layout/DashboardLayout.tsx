@@ -136,13 +136,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         initial={false}
         animate={{ marginLeft: isCollapsed ? 88 : 260 }}
         transition={{ type: "spring", stiffness: 300, damping: 26 }}
-        className="flex-1 h-screen overflow-y-auto"
+        className="flex-1 h-screen min-w-0 overflow-y-auto"
       >
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="h-full flex flex-col"
+          className="h-full flex flex-col w-full min-w-0"
         >
           {children}
         </motion.div>
