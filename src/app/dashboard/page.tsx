@@ -35,6 +35,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       setIsLoading(true)
+      if (!supabase) {
+        setIsLoading(false)
+        return
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -115,6 +120,10 @@ export default function DashboardPage() {
     loadDashboard()
 
     // Realtime subscriptions
+    if (!supabase) {
+      return
+    }
+
     const doctorsChannel = supabase
       .channel('dashboard-doctors-changes')
       .on(
