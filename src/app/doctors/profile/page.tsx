@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '../../../lib/supabase'
+import { auth, db } from '../../../lib/firebase'
+import { ref, onValue, update, get, query, orderByChild, equalTo, push } from 'firebase/database'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import {
   FaCheckCircle,
@@ -30,81 +31,70 @@ function DoctorProfileContent() {
 
   useEffect(() => {
     if (doctorId) {
-      fetchDoctorDetails()
+      setLoading(true)
+      const docRef = ref(db, `doctors/${doctorId}`)
+      const unsubDoctor = onValue(docRef, (snapshot) => {
+        if (snapshot.exists()) {
+          setDoctor({ id: snapshot.key, ...snapshot.val() })
+        }
+        setLoading(false)
+      }, (err) => {
+        console.error('Failed to subscribe to doctor details:', err)
+        setLoading(false)
+      })
+
       fetchDoctorLogs()
 
-      const channel = supabase
-        .channel(`doctor-details-${doctorId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'doctors', filter: `id=eq.${doctorId}` },
-          () => {
-            fetchDoctorDetails()
-          }
-        )
-        .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-      }
+      return () => unsubDoctor()
     } else {
       setLoading(false)
     }
   }, [doctorId])
 
-  async function fetchDoctorDetails() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('doctors')
-      .select(`
-        *,
-        specializations (
-          name
-        ),
-        hospitals (
-          name,
-          city,
-          state
-        ),
-        qualifications (
-          name
-        )
-      `)
-      .eq('id', doctorId)
-      .single()
-
-    if (!error && data) {
-      setDoctor(data)
-    }
-    setLoading(false)
-  }
-
   async function fetchDoctorLogs() {
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .eq('affected_table', 'doctors')
-      .eq('affected_id', doctorId)
-      .order('created_at', { ascending: false })
-    if (data) {
-      setDoctorLogs(data)
+    try {
+      const logsRef = ref(db, 'audit_logs')
+      const q = query(logsRef, orderByChild('affected_id'), equalTo(doctorId))
+      const snaps = await get(q)
+      const list: any[] = []
+      if (snaps.exists()) {
+        snaps.forEach((child) => {
+          const val = child.val()
+          if (val.affected_table === 'doctors') {
+            list.push({ id: child.key, ...val })
+          }
+        })
+      }
+      list.reverse()
+      setDoctorLogs(list)
+    } catch (e) {
+      console.error('Failed to fetch doctor audit logs:', e)
     }
   }
 
   async function toggleDoctorStatus() {
     if (!doctor) return
     const newStatus = !doctor.is_active
-    const { error } = await supabase
-      .from('doctors')
-      .update({ is_active: newStatus })
-      .eq('id', doctor.id)
-
-    if (!error) {
+    try {
+      const docRef = ref(db, `doctors/${doctor.id}`)
+      await update(docRef, { is_active: newStatus })
       setDoctor({ ...doctor, is_active: newStatus })
       alert(`Doctor successfully ${newStatus ? 'activated' : 'deactivated'}.`)
+      
+      // Log verify action
+      const userEmail = auth.currentUser?.email || 'System'
+      await push(ref(db, 'audit_logs'), {
+        user_email: userEmail,
+        action: `${newStatus ? 'Approved' : 'Deactivated'} Doctor profile: ${doctor.name}`,
+        affected_table: 'doctors',
+        affected_id: doctor.id,
+        ip_address: 'Client Connection',
+        user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
+        created_at: new Date().toISOString()
+      })
       fetchDoctorLogs()
-    } else {
-      alert(error.message)
+    } catch (err: any) {
+      alert(err.message || 'Failed to update doctor status')
     }
   }
 
@@ -138,10 +128,10 @@ function DoctorProfileContent() {
     })
   }
 
-  const specialtyName = doctor.specializations?.name || 'Doctor'
-  const hospitalName = doctor.hospitals?.name || 'N/A'
-  const hospitalLocation = doctor.hospitals?.city ? `${doctor.hospitals.city}, ${doctor.hospitals.state || ''}` : 'N/A'
-  const qualificationName = doctor.qualifications?.name || 'N/A'
+  const specialtyName = doctor.specialization_name || doctor.specialty || 'Doctor'
+  const hospitalName = doctor.hospital_name || 'N/A'
+  const hospitalLocation = doctor.hospital_location || 'N/A'
+  const qualificationName = doctor.qualification_name || 'N/A'
   const imageUrl = doctor.image || `https://randomuser.me/api/portraits/men/${(doctor.id?.charCodeAt(0) || 0) % 99 + 1}.jpg`
 
   return (
@@ -189,6 +179,21 @@ function DoctorProfileContent() {
                 <FaEnvelope className="text-[#1B60E0]" />
                 {doctor.email || 'Not Provided'}
               </p>
+
+              <div className="flex gap-3 mt-4 flex-wrap">
+                <Link
+                  href={`/doctors/schedule?id=${doctor.id}`}
+                  className="px-4 py-2 rounded-xl bg-blue-50 text-[#1B60E0] border border-blue-100 font-bold text-xs hover:bg-blue-100 transition-colors"
+                >
+                  Configure Schedule
+                </Link>
+                <Link
+                  href={`/doctors/slots?id=${doctor.id}`}
+                  className="px-4 py-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-xs hover:bg-indigo-100 transition-colors"
+                >
+                  Generate Slots
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -216,13 +221,13 @@ function DoctorProfileContent() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 text-sm font-bold text-center whitespace-nowrap flex items-center justify-center gap-2 cursor-pointer transition-colors border-b-2 ${
+                className={`py-4 text-xs font-bold text-center flex items-center justify-center gap-2 border-b-2 transition-all cursor-pointer ${
                   active
                     ? 'text-[#1B60E0] border-[#1B60E0] bg-blue-50/10'
                     : 'text-[#2B3E64] border-transparent hover:text-[#1B60E0]'
                 }`}
               >
-                <Icon className="text-xs" />
+                <Icon />
                 {tab.label}
               </button>
             )
@@ -230,46 +235,35 @@ function DoctorProfileContent() {
         </div>
       </section>
 
-      {/* --- TAB CONTENT AREA --- */}
       <div className="min-h-[250px]">
         {activeTab === 'Overview' && (
-          <section className="grid grid-cols-1 lg:grid-cols-4 gap-5 animate-in fade-in duration-200">
-            <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-5 text-slate-800">General Information</h2>
-              <div className="space-y-4">
-                <InfoBlock label="Full Name" value={doctor.name} />
-                <InfoBlock label="Date of Birth" value={doctor.dob ? formatDate(doctor.dob) : 'Not Provided'} />
-                <InfoBlock label="Gender" value={doctor.gender || 'Not Provided'} />
-                <InfoBlock label="Experience" value={`${doctor.experience_years || 0} Years`} />
-              </div>
-            </div>
-
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-in fade-in duration-200">
             <div className="lg:col-span-2 bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-5 text-slate-800">Professional Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <h2 className="text-lg font-bold mb-6 text-slate-800 font-sans">Professional Overview</h2>
+              <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                <InfoBlock label="Full Name" value={doctor.name} />
+                <InfoBlock label="Date of Birth" value={doctor.dob || 'Not Provided'} />
+                <InfoBlock label="Gender" value={doctor.gender || 'Not Provided'} />
                 <InfoBlock label="Qualification" value={qualificationName} />
-                <InfoBlock label="Specialization" value={specialtyName} />
+                <InfoBlock label="Specialty / Specialization" value={specialtyName} />
                 <InfoBlock label="Experience" value={`${doctor.experience_years || 0} Years`} />
-                <InfoBlock label="Consultation Fee" value={`₹${doctor.consultation_fee || 0}`} />
-                <div className="md:col-span-2">
-                  <p className="text-xs text-[#889ABF] font-semibold mb-2">Hospital Affiliation</p>
-                  <p className="text-sm font-semibold text-[#0B1528] leading-relaxed">{hospitalName}</p>
-                </div>
+                <InfoBlock label="Primary Affiliation" value={hospitalName} />
+                <InfoBlock label="Registration Date" value={formatDate(doctor.created_at)} />
               </div>
             </div>
 
             <div className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
-              <h2 className="text-base font-bold mb-5 text-slate-800">Statistics</h2>
+              <h2 className="text-lg font-bold mb-6 text-slate-800">Operational Stats</h2>
               <div className="space-y-5">
-                <StatRow label="Avg. Rating" value="4.8" />
+                <StatRow label="Consultation Rate" value={`₹${doctor.consultation_fee || 0} / Slot`} />
+                <StatRow label="Account Status" value={doctor.is_active ? 'Approved & Live' : 'Under Verification'} />
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#2B3E64]">Rating Breakdowns</span>
+                  <span className="text-[#2B3E64]">Avg. Patient Rating</span>
                   <span className="font-bold flex items-center gap-1">
                     <FaStar className="text-yellow-500" />
-                    4.8
+                    4.8 (12 Reviews)
                   </span>
                 </div>
-                <StatRow label="Status" value={doctor.is_active ? 'Active' : 'Inactive'} />
               </div>
             </div>
           </section>
@@ -277,35 +271,41 @@ function DoctorProfileContent() {
 
         {activeTab === 'Documents' && (
           <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm animate-in fade-in duration-200">
-            <h2 className="text-base font-bold mb-4 text-slate-800">Uploaded Documents</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-slate-100 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between h-40">
-                <div>
-                  <h3 className="font-bold text-sm text-slate-800">Medical License Certificate</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">Verified Medical License Document</p>
+            <h2 className="text-base font-bold mb-6 text-slate-800">Uploaded Onboarding Verifications</h2>
+            <div className="space-y-4 max-w-2xl">
+              {/* License Card */}
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0">
+                    <FaFileAlt size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-800">Medical Council License Reference</h3>
+                    <p className="text-xs text-slate-400 font-semibold mt-1">Official Doctor Accreditation Certificate</p>
+                  </div>
                 </div>
                 <div className="flex gap-3">
-                  <button className="bg-white border border-slate-200 text-[#1B60E0] px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-sm">
-                    Preview
-                  </button>
-                  <button className="bg-[#1B60E0] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-600 cursor-pointer shadow-sm">
-                    Download
-                  </button>
+                  <a href={doctor.medical_license_url || '#'} target="_blank" rel="noreferrer" className="bg-white border border-slate-200 text-[#1B60E0] px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-sm">
+                    View
+                  </a>
                 </div>
               </div>
 
-              <div className="border border-slate-100 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between h-40">
-                <div>
-                  <h3 className="font-bold text-sm text-slate-800">Government ID Proof</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">Verified identity verification card</p>
+              {/* ID Proof Card */}
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                    <FaFileAlt size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-800">Identity Verification Document</h3>
+                    <p className="text-xs text-slate-400 font-semibold mt-1">Official Government-issued Identity Card</p>
+                  </div>
                 </div>
                 <div className="flex gap-3">
-                  <button className="bg-white border border-slate-200 text-[#1B60E0] px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-sm">
-                    Preview
-                  </button>
-                  <button className="bg-[#1B60E0] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-600 cursor-pointer shadow-sm">
-                    Download
-                  </button>
+                  <a href={doctor.id_proof_url || '#'} target="_blank" rel="noreferrer" className="bg-white border border-slate-200 text-[#1B60E0] px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-sm">
+                    View
+                  </a>
                 </div>
               </div>
             </div>

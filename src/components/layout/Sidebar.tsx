@@ -6,7 +6,8 @@ import { FiGrid, FiUsers, FiSettings, FiHeadphones, FiLogOut } from 'react-icons
 import { MdOutlineLocalHospital } from 'react-icons/md'
 import { BiChevronRight, BiChevronLeft } from 'react-icons/bi'
 import { FaQuestion } from 'react-icons/fa6'
-import { supabase } from '@/src/lib/supabase'
+import { auth } from '../../lib/firebase'
+import { signOut } from 'firebase/auth'
 import { TbFile } from 'react-icons/tb'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -16,7 +17,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
   const isActive = (path: string) => pathname === path
 
   async function logout() {
-    await supabase.auth.signOut()
+    await signOut(auth)
     window.location.href = '/'
   }
 

@@ -199,7 +199,9 @@ import { MdSecurity } from 'react-icons/md'
 import { FaHospital, FaQuestion } from 'react-icons/fa6'
 import { FaFileAlt, FaUser, FaUserMd } from 'react-icons/fa'
 import loginWallpaper from '../assets/final.jpeg'
-import { supabase } from '../lib/supabase'
+import { auth, db } from '../lib/firebase'
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
+import { ref, get, query, orderByChild, equalTo } from 'firebase/database'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LoginPage() {
@@ -240,57 +242,65 @@ export default function LoginPage() {
   }
 
   // Auth States
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('admn@hospital.com')
+  const [password, setPassword] = useState('Paasword')
   const [loading, setLoading] = useState(false)
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setRequestLoading(true)
-    setTimeout(() => {
+    try {
+      await sendPasswordResetEmail(auth, forgotEmail)
       setRequestLoading(false)
       setViewMode('request_success')
-    }, 1200)
+    } catch (err: any) {
+      alert(err.message || 'Failed to send password reset email.')
+      setRequestLoading(false)
+    }
   }
 
-  // Merged Supabase Login Logic
+  // Merged Firebase Login Logic
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+      const userEmail = user.email || ''
 
-      if (error) {
-        alert(error.message)
+      // Verify in Realtime Database internal_users list
+      const userRef = ref(db, 'internal_users')
+      const q = query(userRef, orderByChild('email'), equalTo(userEmail))
+      const snapshot = await get(q)
+
+      if (!snapshot.exists()) {
+        alert('No portal access')
+        await auth.signOut()
         setLoading(false)
         return
       }
 
-      const userEmail = data.user.email
+      // Check if user is active
+      let isActive = false
+      snapshot.forEach((child) => {
+        if (child.val().is_active === true) {
+          isActive = true
+        }
+      })
 
-      const { data: internalUser, error: dbError } = await supabase
-        .from('internal_users')
-        .select('*')
-        .eq('email', userEmail)
-        .eq('is_active', true)
-        .single()
-
-      if (dbError || !internalUser) {
-        alert('No portal access')
-        await supabase.auth.signOut()
+      if (!isActive) {
+        alert('Your portal access is deactivated.')
+        await auth.signOut()
         setLoading(false)
         return
       }
 
       router.push('/dashboard')
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err)
-      alert("An unexpected error occurred.")
+      alert(err?.message || "An unexpected error occurred.")
       setLoading(false)
     }
   }

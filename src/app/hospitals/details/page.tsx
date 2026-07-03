@@ -2,7 +2,8 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabase'
+import { auth, db } from '../../../lib/firebase'
+import { ref, onValue, update, get, query, orderByChild, equalTo } from 'firebase/database'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import Link from 'next/link'
 import {
@@ -27,59 +28,48 @@ function HospitalDetailsContent() {
 
   useEffect(() => {
     if (hospitalId) {
-      fetchHospitalDetails()
+      setLoading(true)
+      const hospRef = ref(db, `hospitals/${hospitalId}`)
+      const unsubHospital = onValue(hospRef, async (snapshot) => {
+        if (snapshot.exists()) {
+          const hospData = { id: snapshot.key, ...snapshot.val() }
+          setHospital(hospData)
 
-      const channel = supabase
-        .channel(`hospital-details-${hospitalId}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'hospitals', filter: `id=eq.${hospitalId}` },
-          () => {
-            fetchHospitalDetails()
+          // Fetch count of doctors in this hospital from RTDB
+          try {
+            const doctorsRef = ref(db, 'doctors')
+            const q = query(doctorsRef, orderByChild('hospital_id'), equalTo(hospitalId))
+            const docSnaps = await get(q)
+            let count = 0
+            if (docSnaps.exists()) {
+              docSnaps.forEach(() => { count++ })
+            }
+            setDoctorsCount(count)
+          } catch (e) {
+            console.error('Failed to fetch doctor count:', e)
           }
-        )
-        .subscribe()
+        }
+        setLoading(false)
+      }, (err) => {
+        console.error('Failed to fetch hospital details:', err)
+        setLoading(false)
+      })
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
+      return () => unsubHospital()
     } else {
       setLoading(false)
     }
   }, [hospitalId])
 
-  async function fetchHospitalDetails() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('hospitals')
-      .select('*')
-      .eq('id', hospitalId)
-      .single()
-
-    if (!error && data) {
-      setHospital(data)
-      
-      // Fetch count of doctors in this hospital
-      const { count } = await supabase
-        .from('doctors')
-        .select('*', { count: 'exact', head: true })
-        .eq('hospital_id', hospitalId)
-      
-      setDoctorsCount(count || 0)
-    }
-    setLoading(false)
-  }
-
   async function toggleHospitalStatus() {
     if (!hospital) return
     const newStatus = !hospital.is_active
-    const { error } = await supabase
-      .from('hospitals')
-      .update({ is_active: newStatus })
-      .eq('id', hospital.id)
-
-    if (!error) {
+    try {
+      const hospRef = ref(db, `hospitals/${hospital.id}`)
+      await update(hospRef, { is_active: newStatus })
       setHospital({ ...hospital, is_active: newStatus })
+    } catch (e: any) {
+      alert(e.message || 'Failed to update status')
     }
   }
 

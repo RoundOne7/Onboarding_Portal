@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update } from 'firebase/database'
 import {FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaHospitalSymbol} from 'react-icons/fa'
 import { useRouter } from 'next/navigation'
 import { MdOutlineLocalHospital } from 'react-icons/md'
@@ -32,44 +33,31 @@ export default function HospitalsPage() {
     } as const
 
     useEffect(() => {
-        fetchHospitals()
+        setLoading(true)
+        const hospRef = ref(db, 'hospitals')
+        const unsubscribe = onValue(hospRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setHospitals(list)
+            setLoading(false)
+        }, (err) => {
+            console.error('Failed to subscribe to hospitals:', err)
+            setLoading(false)
+        })
 
-        const channel = supabase
-            .channel('hospitals-list-changes')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'hospitals' },
-                () => {
-                    fetchHospitals()
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
+        return () => unsubscribe()
     }, [])
 
-    async function fetchHospitals() {
-        setLoading(true)
-        const { data, error } = await supabase
-            .from('hospitals')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (!error && data) {
-            setHospitals(data as any[])
-        }
-        setLoading(false)
-    }
-
     async function toggleHospitalStatus(hospital: any) {
-        await supabase
-            .from('hospitals')
-            .update({ is_active: !hospital.is_active })
-            .eq('id', hospital.id)
-
-        fetchHospitals()
+        try {
+            const hospRef = ref(db, `hospitals/${hospital.id}`)
+            await update(hospRef, { is_active: !hospital.is_active })
+        } catch (e: any) {
+            alert(e.message || 'Failed to update hospital status')
+        }
     }
 
     // Format ISO date to "12 May 2024"
@@ -350,9 +338,9 @@ export default function HospitalsPage() {
                             <form onSubmit={async (e) => {
                                 e.preventDefault()
                                 setLoading(true)
-                                const { error } = await supabase
-                                    .from('hospitals')
-                                    .update({
+                                try {
+                                    const hospRef = ref(db, `hospitals/${editingHospital.id}`)
+                                    await update(hospRef, {
                                         name: editingHospital.name,
                                         hospital_type: editingHospital.hospital_type,
                                         registration_number: editingHospital.registration_number,
@@ -360,15 +348,12 @@ export default function HospitalsPage() {
                                         phone: editingHospital.phone,
                                         city: editingHospital.city
                                     })
-                                    .eq('id', editingHospital.id)
-                                
-                                setLoading(false)
-                                if (error) {
-                                    alert(error.message)
-                                } else {
                                     setEditingHospital(null)
                                     alert('Hospital details updated successfully!')
-                                    fetchHospitals()
+                                } catch (err: any) {
+                                    alert(err.message || 'Failed to update hospital details')
+                                } finally {
+                                    setLoading(false)
                                 }
                             }} className="flex flex-col gap-4">
                                 <div>
@@ -414,4 +399,4 @@ export default function HospitalsPage() {
             </main>
         </DashboardLayout>
     )
-}
+}

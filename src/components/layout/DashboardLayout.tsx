@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from './Sidebar'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { ref, push, get, query, orderByChild, equalTo } from 'firebase/database'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 
@@ -18,15 +20,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const logAuditActivity = async (email: string, action: string) => {
     try {
-      await supabase.from('audit_logs').insert([
-        {
-          user_email: email,
-          user_role: 'N/A',
-          action: action,
-          ip_address: 'Client Connection',
-          user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
-        }
-      ])
+      await push(ref(db, 'audit_logs'), {
+        user_email: email,
+        user_role: 'N/A',
+        action: action,
+        ip_address: 'Client Connection',
+        user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
+        created_at: new Date().toISOString()
+      })
     } catch (e) {
       console.error('Failed to log audit activity:', e)
     }
@@ -36,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (email) {
       await logAuditActivity(email, `Logout: ${message}`)
     }
-    await supabase.auth.signOut()
+    await signOut(auth)
     alert(message)
     router.push('/')
   }
@@ -57,45 +58,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (email) resetInactivityTimeout(email)
     }
     
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (isCleanup) return
       
-      if (!session) {
+      if (!user) {
         router.push('/')
         return
       }
 
-      email = session.user.email || ''
+      email = user.email || ''
 
-      // Verify user in internal_users and check if active
-      const { data: internalUser, error } = await supabase
-        .from('internal_users')
-        .select('*')
-        .eq('email', email)
-        .single()
+      try {
+        // Verify user in internal_users Realtime Database and check if active
+        const userRef = ref(db, 'internal_users')
+        const q = query(userRef, orderByChild('email'), equalTo(email))
+        const snapshot = await get(q)
+        
+        if (isCleanup) return
 
-      if (isCleanup) return
+        if (!snapshot.exists()) {
+          await logAuditActivity(email, 'Failed Authorization: User record not found in registry')
+          await signOut(auth)
+          alert('Unauthorized Access: Your account is not registered in the portal registry.')
+          router.push('/')
+          return
+        }
 
-      if (error || !internalUser || !internalUser.is_active) {
-        await logAuditActivity(email, 'Failed Authorization: Account is inactive or lacks portal access')
-        await supabase.auth.signOut()
-        alert('Unauthorized Access: Your account is inactive or lacks portal access.')
+        let activeUserVal: any = null
+        snapshot.forEach((child) => {
+          if (child.val().is_active === true) {
+            activeUserVal = child.val()
+          }
+        })
+
+        if (!activeUserVal) {
+          await logAuditActivity(email, 'Failed Authorization: Account is inactive')
+          await signOut(auth)
+          alert('Unauthorized Access: Your account is inactive.')
+          router.push('/')
+          return
+        }
+
+        await logAuditActivity(email, 'Successful Authorization Verification')
+        setLoading(false)
+
+        // Start listening to inactivity events
+        resetInactivityTimeout(email)
+        activityEvents.forEach(event => {
+          window.addEventListener(event, handleUserActivity)
+        })
+      } catch (err) {
+        console.error("Auth check failed:", err)
         router.push('/')
-        return
       }
-
-      await logAuditActivity(email, 'Successful Authorization Verification')
-      setLoading(false)
-
-      // Start listening to inactivity events
-      resetInactivityTimeout(email)
-      activityEvents.forEach(event => {
-        window.addEventListener(event, handleUserActivity)
-      })
-    }
-
-    checkAuth()
+    })
 
     const savedState = localStorage.getItem('sidebarState')
     if (savedState) {
@@ -105,6 +121,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return () => {
       isCleanup = true
+      unsubscribe()
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
       activityEvents.forEach(event => {
         window.removeEventListener(event, handleUserActivity)

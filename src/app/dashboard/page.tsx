@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue } from 'firebase/database'
 import {
   FaUserMd,
   FaHospital,
@@ -28,113 +29,80 @@ export default function DashboardPage() {
   const [recentDoctors, setRecentDoctors] = useState<any[]>([])
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      setIsLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+    setIsLoading(true)
 
-      if (user) {
-        const name =
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email?.split('@')[0] ||
-          'User'
-
-        setUserName(name)
-      }
-
-      try {
-        // 1. Doctors count
-        const { count: docCount, error: docError } = await supabase
-          .from('doctors')
-          .select('*', { count: 'exact', head: true })
-
-        // 2. Hospitals count and list
-        const { data: hospData, error: hospError } = await supabase
-          .from('hospitals')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        // 3. Doctors list with joins
-        const { data: docsData, error: docsError } = await supabase
-          .from('doctors')
-          .select(`
-            *,
-            specializations (
-              name
-            ),
-            hospitals (
-              name
-            )
-          `)
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        if (!hospError && hospData) {
-          const cities = new Set(hospData.map((h: any) => h.city).filter(Boolean))
-          
-          setStats({
-            doctors: docError ? '0' : String(docCount || 0),
-            hospitals: String(hospData.length),
-            locations: String(cities.size || 0)
-          })
-
-          const mappedHospitals = hospData.slice(0, 5).map((h: any) => ({
-            name: h.name,
-            place: h.city ? `${h.city}` : 'N/A',
-            status: h.is_active ? 'Approved' : 'Pending',
-            date: h.created_at ? new Date(h.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
-            image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=120&q=80'
-          }))
-          setRecentHospitals(mappedHospitals)
-        }
-
-        if (!docsError && docsData) {
-          const mappedDoctors = docsData.map((d: any) => ({
-            name: d.name,
-            role: d.specializations?.name || 'Doctor',
-            status: d.is_active ? 'Approved' : 'Pending',
-            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
-            image: d.image || `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 90) + 1}.jpg`
-          }))
-          setRecentDoctors(mappedDoctors)
-        }
-      } catch (err) {
-        console.error('Error loading dashboard stats:', err)
-      }
-
-      setIsLoading(false)
+    // Set userName
+    const user = auth.currentUser
+    if (user) {
+      setUserName(user.displayName || user.email?.split('@')[0] || 'User')
     }
 
-    loadDashboard()
+    // Subscribe to hospitals
+    const hospRef = ref(db, 'hospitals')
+    const unsubHospitals = onValue(hospRef, (snapshot) => {
+      const hospitalList: any[] = []
+      snapshot.forEach((child) => {
+        hospitalList.push({ id: child.key, ...child.val() })
+      })
 
-    // Realtime subscriptions
-    const doctorsChannel = supabase
-      .channel('dashboard-doctors-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'doctors' },
-        () => {
-          loadDashboard()
-        }
-      )
-      .subscribe()
+      // Reverse list to show recently created first (since RTDB is chronological)
+      hospitalList.reverse()
 
-    const hospitalsChannel = supabase
-      .channel('dashboard-hospitals-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'hospitals' },
-        () => {
-          loadDashboard()
-        }
-      )
-      .subscribe()
+      // Calculate cities count
+      const cities = new Set(hospitalList.map((h: any) => h.city).filter(Boolean))
+      
+      setStats(prev => ({
+        ...prev,
+        hospitals: String(hospitalList.length),
+        locations: String(cities.size || 0)
+      }))
+
+      // Map recent hospitals
+      const mappedHospitals = hospitalList.slice(0, 5).map((h: any) => ({
+        name: h.name,
+        place: h.city ? `${h.city}` : 'N/A',
+        status: h.is_active ? 'Approved' : 'Pending',
+        date: h.created_at ? new Date(h.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+        image: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=120&q=80'
+      }))
+      setRecentHospitals(mappedHospitals)
+      setIsLoading(false)
+    }, (err) => {
+      console.error('Error fetching hospitals for dashboard:', err)
+      setIsLoading(false)
+    })
+
+    // Subscribe to doctors
+    const doctorsRef = ref(db, 'doctors')
+    const unsubDoctors = onValue(doctorsRef, (snapshot) => {
+      const doctorList: any[] = []
+      snapshot.forEach((child) => {
+        doctorList.push({ id: child.key, ...child.val() })
+      })
+
+      doctorList.reverse()
+
+      setStats(prev => ({
+        ...prev,
+        doctors: String(doctorList.length)
+      }))
+
+      // Map recent doctors
+      const mappedDoctors = doctorList.slice(0, 5).map((d: any) => ({
+        name: d.name,
+        role: d.specialization_name || d.specialty || 'Doctor',
+        status: d.is_active ? 'Approved' : 'Pending',
+        date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A',
+        image: d.image || `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 90) + 1}.jpg`
+      }))
+      setRecentDoctors(mappedDoctors)
+    }, (err) => {
+      console.error('Error fetching doctors for dashboard:', err)
+    })
 
     return () => {
-      supabase.removeChannel(doctorsChannel)
-      supabase.removeChannel(hospitalsChannel)
+      unsubHospitals()
+      unsubDoctors()
     }
   }, [])
 

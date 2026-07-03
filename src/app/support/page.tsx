@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, push } from 'firebase/database'
 import { FiMail, FiPhone, FiMessageCircle, FiSend, FiCheckCircle, FiHeadphones, FiAlertCircle } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 
@@ -16,59 +17,41 @@ export default function SupportPage() {
     const [tickets, setTickets] = useState<any[]>([])
 
     useEffect(() => {
-        fetchTickets()
+        const ticketsRef = ref(db, 'tickets')
+        const unsubscribe = onValue(ticketsRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setTickets(list)
+        }, (err) => {
+            console.error('Failed to subscribe to tickets:', err)
+        })
 
-        const channel = supabase
-            .channel('support-tickets-changes')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'tickets' },
-                () => {
-                    fetchTickets()
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
+        return () => unsubscribe()
     }, [])
-
-    async function fetchTickets() {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
-        const { data, error } = await supabase
-            .from('tickets')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (!error && data) {
-            setTickets(data)
-        }
-    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsSubmitting(true)
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
+            const user = auth.currentUser
             if (!user) {
                 alert('No active session found.')
                 return
             }
 
-            const { error } = await supabase.from('tickets').insert([{
+            await push(ref(db, 'tickets'), {
                 subject,
                 ticket_type: ticketType,
                 priority,
                 message,
                 status: 'Open',
-                user_email: user.email || 'unknown@user.com'
-            }])
-
-            if (error) throw error
+                user_email: user.email || 'unknown@user.com',
+                created_at: new Date().toISOString()
+            })
 
             setIsSubmitted(true)
             setSubject('')
@@ -77,7 +60,6 @@ export default function SupportPage() {
             setMessage('')
 
             setTimeout(() => setIsSubmitted(false), 3000)
-            fetchTickets()
         } catch (err: any) {
             alert(err.message || 'An error occurred while submitting your ticket.')
         } finally {
@@ -172,7 +154,7 @@ export default function SupportPage() {
 
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
-                                        Priority <span className="text-red-500">*</span>
+                                        Priority Level <span className="text-red-500">*</span>
                                     </label>
                                     <select 
                                         required
@@ -180,159 +162,139 @@ export default function SupportPage() {
                                         onChange={(e) => setPriority(e.target.value)}
                                         className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-slate-800 bg-white cursor-pointer"
                                     >
-                                        <option value="Low">Low</option>
+                                        <option value="Low">Low (Non-critical)</option>
                                         <option value="Medium">Medium</option>
                                         <option value="High">High</option>
-                                        <option value="Critical">Critical</option>
+                                        <option value="Critical">Critical (System Down)</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
-                                    Detailed Description <span className="text-red-500">*</span>
+                                    Describe the issue <span className="text-red-500">*</span>
                                 </label>
                                 <textarea 
                                     required
-                                    rows={5}
-                                    placeholder="Please describe the issue in detail. Include steps to reproduce if applicable."
+                                    rows={6}
+                                    placeholder="Explain the issue in detail here..."
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
-                                    className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-gray-400 resize-none font-semibold text-slate-800"
+                                    className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-slate-800 outline-none"
                                 />
                             </div>
 
-                            <div className="pt-2 flex items-center justify-between">
-                                {isSubmitted ? (
-                                    <div className="flex items-center gap-2 text-green-600 font-bold text-sm animate-in fade-in">
-                                        <FiCheckCircle size={18} />
-                                        Ticket raised successfully!
-                                    </div>
-                                ) : (
-                                    <div></div>
-                                )}
+                            <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-[#889ABF] font-semibold flex items-center gap-1.5">
+                                    <FiAlertCircle className="text-amber-500" />
+                                    All fields marked with (*) are required.
+                                </span>
                                 
-                                <motion.button 
-                                    whileHover={{ scale: 1.01 }}
-                                    whileTap={{ scale: 0.99 }}
-                                    type="submit" 
+                                <button 
+                                    type="submit"
                                     disabled={isSubmitting}
-                                    className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold flex items-center gap-2 shadow-md shadow-blue-500/10 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl text-xs tracking-wider uppercase flex items-center gap-2 shadow-md shadow-blue-500/15 transition-all hover:scale-[1.01] cursor-pointer"
                                 >
-                                    {isSubmitting ? 'Submitting...' : (
+                                    {isSubmitting ? (
+                                        'Sending...'
+                                    ) : (
                                         <>
-                                            <FiSend size={16} />
+                                            <FiSend />
                                             Submit Ticket
                                         </>
                                     )}
-                                </motion.button>
+                                </button>
                             </div>
-                        </form>
 
-                        {/* SUBMITTED TICKETS LIST */}
-                        <div className="mt-12">
-                            <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-3">Your Support Tickets</h3>
-                            {tickets.length === 0 ? (
-                                <p className="text-xs text-slate-400 font-semibold py-4">You have not submitted any tickets yet.</p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {tickets.map((t) => (
-                                        <div key={t.id} className="border border-slate-100 rounded-xl p-4 hover:bg-slate-50/50 transition-colors">
-                                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                                <h4 className="font-bold text-sm text-slate-800">{t.subject}</h4>
-                                                <div className="flex gap-2">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getPriorityColor(t.priority)}`}>
-                                                        {t.priority}
-                                                    </span>
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getStatusColor(t.status)}`}>
-                                                        {t.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-slate-500 font-medium line-clamp-2">{t.message}</p>
-                                            <span className="text-[10px] text-slate-400 font-semibold mt-2 block">
-                                                Type: {t.ticket_type} • Raised on: {new Date(t.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
+                            {isSubmitted && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-[#DBF1CF] border border-[#C2E7B0] text-[#335F1B] px-4 py-3.5 rounded-xl flex items-center gap-3 text-sm font-bold mt-2"
+                                >
+                                    <FiCheckCircle size={18} />
+                                    Support ticket submitted successfully! Reference logged.
+                                </motion.div>
                             )}
-                        </div>
+                        </form>
                     </motion.section>
 
-                    {/* --- RIGHT COLUMN: QUICK CONTACTS & FAQ --- */}
+                    {/* --- RIGHT COLUMN: HELPLINES & HISTORY --- */}
                     <div className="flex flex-col gap-6">
                         
-                        {/* Direct Contact Cards */}
+                        {/* Direct Helplines */}
+                        <motion.section 
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15 }}
+                            className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium"
+                        >
+                            <h3 className="font-bold text-slate-800 text-base mb-4">Direct Helplines</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0">
+                                        <FiMail size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
+                                        <p className="text-xs font-bold text-slate-700 mt-0.5">support@quickcheck.com</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                                        <FiPhone size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Toll-Free Number</p>
+                                        <p className="text-xs font-bold text-slate-700 mt-0.5">1800-456-9999</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 shadow-sm shrink-0">
+                                        <FiMessageCircle size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Live Chat</p>
+                                        <p className="text-xs font-bold text-slate-700 mt-0.5">Available Mon-Fri, 9am - 6pm</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.section>
+
+                        {/* Recent Support Tickets */}
                         <motion.section 
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium"
+                            className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex-1 flex flex-col"
                         >
-                            <h2 className="text-base font-bold text-slate-800 mb-5">Other ways to connect</h2>
-                            
-                            <div className="flex flex-col gap-4">
-                                <motion.div 
-                                    whileHover={{ x: 4 }}
-                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 cursor-pointer group"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center shrink-0 group-hover:bg-[#0066FF] group-hover:text-white transition-colors shadow-sm">
-                                        <FiMail size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Email Support</p>
-                                        <p className="text-xs text-[#889ABF] font-semibold mt-0.5">support@quickcheck.com</p>
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    whileHover={{ x: 4 }}
-                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 cursor-pointer group"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0 group-hover:bg-green-600 group-hover:text-white transition-colors shadow-sm">
-                                        <FiPhone size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Call Us (Toll-Free)</p>
-                                        <p className="text-xs text-[#889ABF] font-semibold mt-0.5">1800-123-4567</p>
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    whileHover={{ x: 4 }}
-                                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 cursor-pointer group"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-sm">
-                                        <FiMessageCircle size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700">Live Chat</p>
-                                        <p className="text-xs text-[#889ABF] font-semibold mt-0.5">Available 9 AM - 6 PM</p>
-                                    </div>
-                                </motion.div>
-                            </div>
+                            <h3 className="font-bold text-slate-800 text-base mb-4">Support History</h3>
+                            {tickets.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-10 flex-1">
+                                    <p className="text-xs text-slate-400 font-semibold text-center">No support tickets created yet.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                                    {tickets.map((ticket) => (
+                                        <div key={ticket.id} className="p-3.5 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase ${getPriorityColor(ticket.priority)}`}>
+                                                    {ticket.priority}
+                                                </span>
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold ${getStatusColor(ticket.status)}`}>
+                                                    {ticket.status}
+                                                </span>
+                                            </div>
+                                            <h4 className="text-xs font-bold text-slate-700 line-clamp-1">{ticket.subject}</h4>
+                                            <p className="text-[10px] text-slate-400 font-semibold mt-1">Logged on: {new Date(ticket.created_at).toLocaleDateString('en-GB')}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </motion.section>
 
-                        {/* Mini FAQ */}
-                        <motion.section 
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="bg-gradient-to-br from-slate-800 to-[#0B1528] rounded-2xl p-6 shadow-premium text-white"
-                        >
-                            <h2 className="text-base font-bold mb-4">Quick Help</h2>
-                            <ul className="flex flex-col gap-4 text-sm text-slate-300">
-                                <li className="pb-3 border-b border-slate-700/50">
-                                    <strong className="block text-white mb-1.5 font-bold">How long does approval take?</strong>
-                                    Hospital approvals typically take 24-48 business hours after document verification.
-                                </li>
-                                <li>
-                                    <strong className="block text-white mb-1.5 font-bold">File upload limits?</strong>
-                                    Certificates and licenses must be under 5MB in PDF, JPG, or PNG format.
-                                </li>
-                            </ul>
-                        </motion.section>
                     </div>
 
                 </div>

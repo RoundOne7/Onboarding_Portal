@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabase'
+import { auth, db, storage } from '../../../lib/firebase'
+import { ref as dbRef, push, get, query as dbQuery, orderByChild, equalTo } from 'firebase/database'
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import { FiUploadCloud } from 'react-icons/fi'
 import { FaQuestion } from 'react-icons/fa'
@@ -12,6 +14,7 @@ export default function AddHospitalPage() {
 
     const [currentStep, setCurrentStep] = useState(1)
     const [loading, setLoading] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
 
     // Form States
     const [name, setName] = useState('')
@@ -78,12 +81,15 @@ export default function AddHospitalPage() {
     }
 
     const checkDuplicateRegistration = async (regNum: string) => {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .select('id')
-            .eq('registration_number', regNum)
-            .maybeSingle()
-        return !!data
+        try {
+            const hospRef = dbRef(db, 'hospitals')
+            const q = dbQuery(hospRef, orderByChild('registration_number'), equalTo(regNum))
+            const snapshot = await get(q)
+            return snapshot.exists()
+        } catch (e) {
+            console.error('Duplicate check failed:', e)
+            return false
+        }
     }
 
     const handleNextStep = async () => {
@@ -173,38 +179,65 @@ export default function AddHospitalPage() {
         }
     }
 
-    const uploadFile = async (file: File, folder: string) => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
-        const filePath = `${folder}/${fileName}`
-
-        // In production, we upload to a Supabase storage bucket named "hospital-docs"
-        const { data, error } = await supabase.storage
-            .from('hospital-docs')
-            .upload(filePath, file)
-
-        if (error) {
-            console.error('File upload failed (make sure bucket exists):', error.message)
-            return file.name // Fallback to filename if bucket not provisioned
-        }
-        return filePath
+    const uploadFile = (file: File, folder: string, onProgress: (pct: number) => void) => {
+        return new Promise<string>((resolve, reject) => {
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
+            const sRef = storageRef(storage, `hospital-docs/${folder}/${fileName}`)
+            
+            const uploadTask = uploadBytesResumable(sRef, file)
+            
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+                    onProgress(progress)
+                }, 
+                (error) => {
+                    reject(error)
+                }, 
+                async () => {
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
+                        resolve(downloadURL)
+                    } catch (err) {
+                        reject(err)
+                    }
+                }
+            )
+        })
     }
 
     async function handleFinalSubmit() {
         setLoading(true)
+        setUploadProgress({})
 
         try {
             let regCertPath = ''
             let compDocPath = ''
 
+            const uploadPromises = []
+
             if (registrationCert) {
-                regCertPath = await uploadFile(registrationCert, 'registration')
+                uploadPromises.push(
+                    uploadFile(registrationCert, 'registration', (pct) => {
+                        setUploadProgress(prev => ({ ...prev, [registrationCert.name]: pct }))
+                    }).then(path => { regCertPath = path })
+                )
             }
             if (complianceDoc) {
-                compDocPath = await uploadFile(complianceDoc, 'compliance')
+                uploadPromises.push(
+                    uploadFile(complianceDoc, 'compliance', (pct) => {
+                        setUploadProgress(prev => ({ ...prev, [complianceDoc.name]: pct }))
+                    }).then(path => { compDocPath = path })
+                )
             }
 
-            const { data, error } = await supabase.from('hospitals').insert([{
+            if (uploadPromises.length > 0) {
+                await Promise.all(uploadPromises)
+            }
+
+            const newHospRef = dbRef(db, 'hospitals')
+            const addedRef = await push(newHospRef, {
                 name,
                 hospital_type: hospitalType,
                 registration_number: registrationNumber,
@@ -220,21 +253,23 @@ export default function AddHospitalPage() {
                 admin_name: adminName,
                 admin_email: adminEmail,
                 admin_phone: adminPhone,
-                is_active: false
-            }]).select().single()
-
-            if (error) throw error
+                is_active: false,
+                created_at: new Date().toISOString(),
+                registration_cert_url: regCertPath,
+                compliance_doc_url: compDocPath
+            })
 
             // Log upload & create action in audit_logs
-            const userEmail = (await supabase.auth.getUser()).data.user?.email || 'System'
-            await supabase.from('audit_logs').insert([{
+            const userEmail = auth.currentUser?.email || 'System'
+            await push(dbRef(db, 'audit_logs'), {
                 user_email: userEmail,
                 action: `Onboarded Hospital: ${name} (Reg: ${registrationNumber})`,
                 affected_table: 'hospitals',
-                affected_id: data.id,
+                affected_id: addedRef.key,
                 ip_address: 'Client Connection',
-                user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server'
-            }])
+                user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
+                created_at: new Date().toISOString()
+            })
 
             // Clear draft
             localStorage.removeItem('hospital_onboarding_draft')
@@ -614,12 +649,38 @@ export default function AddHospitalPage() {
                 return (
                     <div className="flex flex-col items-center justify-center py-10 w-full animate-in fade-in zoom-in-95 duration-300">
                         <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-4">
-                            <FiUploadCloud size={32} />
+                            <FiUploadCloud size={32} className={loading ? "animate-bounce" : ""} />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">Ready to Submit</h3>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">
+                            {loading ? 'Submitting Profile...' : 'Ready to Submit'}
+                        </h3>
                         <p className="text-slate-500 text-sm text-center max-w-sm mb-6">
-                            Please ensure all information is correct before submitting the hospital profile to the database.
+                            {loading 
+                                ? 'Uploading documents and saving details. Please do not close this window.' 
+                                : 'Please ensure all information is correct before submitting the hospital profile to the database.'}
                         </p>
+
+                        {loading && Object.keys(uploadProgress).length > 0 && (
+                            <div className="w-full max-w-md bg-slate-50 border border-slate-200/60 rounded-2xl p-5 shadow-sm">
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Document Upload Progress</h4>
+                                <div className="space-y-4">
+                                    {Object.entries(uploadProgress).map(([fileName, pct]) => (
+                                        <div key={fileName} className="text-left">
+                                            <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
+                                                <span className="truncate max-w-[280px]">{fileName}</span>
+                                                <span className="text-blue-600">{pct}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-300 ease-out" 
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )
 

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update, get, set, push } from 'firebase/database'
 import { 
     FiUser, FiBell, FiShield, FiSave, FiSettings, 
-    FiUsers, FiActivity, FiPlus, FiClock, FiPower 
+    FiUsers, FiActivity, FiPlus, FiClock
 } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -32,84 +33,76 @@ export default function SettingsPage() {
     useEffect(() => {
         loadSettingsData()
 
-        const usersChannel = supabase.channel('settings-users')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'internal_users' }, () => fetchTeamMembers())
-            .subscribe()
+        const usersRef = ref(db, 'internal_users')
+        const unsubUsers = onValue(usersRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setTeamMembers(list)
+        }, (err) => console.error(err))
 
-        const auditsChannel = supabase.channel('settings-audits')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, () => fetchAuditLogs())
-            .subscribe()
+        const auditsRef = ref(db, 'audit_logs')
+        const unsubAudits = onValue(auditsRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setAuditLogs(list)
+        }, (err) => console.error(err))
 
         return () => {
-            supabase.removeChannel(usersChannel)
-            supabase.removeChannel(auditsChannel)
+            unsubUsers()
+            unsubAudits()
         }
     }, [])
 
     async function loadSettingsData() {
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = auth.currentUser
         if (user) {
             setCurrentUser({
-                name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Administrator',
+                name: user.displayName || user.email?.split('@')[0] || 'Administrator',
                 email: user.email || '',
                 role: 'Super Admin'
             })
         }
 
         fetchSettings()
-        fetchTeamMembers()
-        fetchAuditLogs()
     }
 
     async function fetchSettings() {
-        const { data } = await supabase.from('settings').select('*')
-        if (data) {
-            data.forEach((s: any) => {
-                if (s.key === 'branding') setBrandingSettings(s.value)
-                if (s.key === 'regional') setRegionalSettings(s.value)
-                if (s.key === 'security') setSecuritySettings(s.value)
-            })
-        }
-    }
-
-    async function fetchTeamMembers() {
-        const { data, error } = await supabase
-            .from('internal_users')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (!error && data) {
-            setTeamMembers(data)
-        }
-    }
-
-    async function fetchAuditLogs() {
-        const { data, error } = await supabase
-            .from('audit_logs')
-            .select('*')
-            .order('created_at', { ascending: false })
-
-        if (!error && data) {
-            setAuditLogs(data)
+        try {
+            const snaps = await get(ref(db, 'settings'))
+            if (snaps.exists()) {
+                snaps.forEach((docSnapshot) => {
+                    const key = docSnapshot.key
+                    const val = docSnapshot.val().value
+                    if (key === 'branding') setBrandingSettings(val)
+                    if (key === 'regional') setRegionalSettings(val)
+                    if (key === 'security') setSecuritySettings(val)
+                })
+            }
+        } catch (e) {
+            console.error('Fetch settings failed:', e)
         }
     }
 
     const handleSaveSettings = async () => {
         setIsSaving(true)
         try {
-            const { error } = await supabase.from('settings').upsert([
-                { key: 'branding', value: brandingSettings },
-                { key: 'regional', value: regionalSettings },
-                { key: 'security', value: securitySettings }
-            ])
-            if (error) throw error
+            await set(ref(db, 'settings/branding'), { value: brandingSettings })
+            await set(ref(db, 'settings/regional'), { value: regionalSettings })
+            await set(ref(db, 'settings/security'), { value: securitySettings })
 
             // Log save activity
-            await supabase.from('audit_logs').insert([{
+            await push(ref(db, 'audit_logs'), {
                 user_email: currentUser.email,
                 action: 'Updated system security and branding settings configurations',
-                ip_address: 'Client Connection'
-            }])
+                ip_address: 'Client Connection',
+                created_at: new Date().toISOString()
+            })
 
             alert('Settings saved successfully!')
         } catch (e: any) {
@@ -125,28 +118,25 @@ export default function SettingsPage() {
         const role = prompt('Enter role (Super Admin, Verifier, Operator, Support):', 'Verifier')
         if (!role) return
 
-        const { error } = await supabase
-            .from('internal_users')
-            .insert([{ email, role, is_active: true }])
-
-        if (error) {
-            alert(error.message)
-        } else {
+        try {
+            await push(ref(db, 'internal_users'), {
+                email,
+                role,
+                is_active: true,
+                created_at: new Date().toISOString()
+            })
             alert('Team member added successfully!')
-            fetchTeamMembers()
+        } catch (e: any) {
+            alert(e.message || 'Failed to invite team member.')
         }
     }
 
     const toggleMemberStatus = async (member: any) => {
-        const { error } = await supabase
-            .from('internal_users')
-            .update({ is_active: !member.is_active })
-            .eq('id', member.id)
-
-        if (error) {
-            alert(error.message)
-        } else {
-            fetchTeamMembers()
+        try {
+            const memberRef = ref(db, `internal_users/${member.id}`)
+            await update(memberRef, { is_active: !member.is_active })
+        } catch (e: any) {
+            alert(e.message || 'Failed to toggle status.')
         }
     }
 

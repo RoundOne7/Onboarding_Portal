@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue } from 'firebase/database'
 import { FaArrowUp, FaArrowDown, FaQuestion } from 'react-icons/fa'
 import {
   AreaChart,
@@ -31,34 +32,14 @@ export default function ReportsPage() {
     const [chartData, setChartData] = useState<any[]>([])
 
     useEffect(() => {
-        fetchAnalytics()
-
-        const channel = supabase
-            .channel('appointments-realtime')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'appointments' },
-                () => {
-                    fetchAnalytics()
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [])
-
-    async function fetchAnalytics() {
         setLoading(true)
-
-        // Fetch all appointments (You can add date filters here later!)
-        const { data: appointments, error } = await supabase
-            .from('appointments')
-            .select('*')
-            .order('created_at', { ascending: true })
-
-        if (!error && appointments) {
+        const apptsRef = ref(db, 'appointments')
+        const unsubscribe = onValue(apptsRef, (snapshot) => {
+            const appointments: any[] = []
+            snapshot.forEach((child) => {
+                appointments.push({ id: child.key, ...child.val() })
+            })
+            
             // 1. Calculate KPIs
             let completed = 0, pending = 0, cancelled = 0, noShow = 0;
             
@@ -94,10 +75,14 @@ export default function ReportsPage() {
             }))
 
             setChartData(formattedChartData)
-        }
-        
-        setLoading(false)
-    }
+            setLoading(false)
+        }, (err) => {
+            console.error('Failed to subscribe to appointments:', err)
+            setLoading(false)
+        })
+
+        return () => unsubscribe()
+    }, [])
 
     const getPercent = (value: number) => {
         if (kpis.total === 0) return '0.0%'

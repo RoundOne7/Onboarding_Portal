@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update } from 'firebase/database'
 import { useRouter } from 'next/navigation'
 import {
   FaPlus,
@@ -42,53 +43,30 @@ export default function DoctorsPage() {
   } as const
 
   useEffect(() => {
-    fetchDoctors()
+    setLoading(true)
+    const doctorsRef = ref(db, 'doctors')
+    const unsubscribe = onValue(doctorsRef, (snapshot) => {
+      const list: any[] = []
+      snapshot.forEach((child) => {
+        list.push({ id: child.key, ...child.val() })
+      })
+      list.reverse()
+      setDoctors(list)
+      setLoading(false)
+    }, (err) => {
+      console.error('Failed to subscribe to doctors:', err)
+      setLoading(false)
+    })
 
-    const channel = supabase
-      .channel('doctors-list-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'doctors' },
-        () => {
-          fetchDoctors()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
+    return () => unsubscribe()
   }, [])
 
-  async function fetchDoctors() {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('doctors')
-      .select(`
-        *,
-        specializations (
-          name
-        ),
-        hospitals (
-          name
-        )
-      `)
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setDoctors(data)
-    }
-    setLoading(false)
-  }
-
   async function toggleDoctorStatus(doctor: any) {
-    const { error } = await supabase
-      .from('doctors')
-      .update({ is_active: !doctor.is_active })
-      .eq('id', doctor.id)
-
-    if (!error) {
-      fetchDoctors()
+    try {
+      const docRef = ref(db, `doctors/${doctor.id}`)
+      await update(docRef, { is_active: !doctor.is_active })
+    } catch (e: any) {
+      alert(e.message || 'Failed to toggle status')
     }
   }
 
@@ -106,8 +84,8 @@ export default function DoctorsPage() {
   // Filter doctors list dynamically
   const filteredDoctors = useMemo(() => {
     return doctors.filter(doctor => {
-      const specialtyName = doctor.specializations?.name || 'Doctor'
-      const hospitalName = doctor.hospitals?.name || 'N/A'
+      const specialtyName = doctor.specialization_name || doctor.specialty || 'Doctor'
+      const hospitalName = doctor.hospital_name || 'N/A'
       const matchesSearch = 
         (doctor.name || '').toLowerCase().includes(search.toLowerCase()) ||
         specialtyName.toLowerCase().includes(search.toLowerCase()) ||
@@ -129,18 +107,6 @@ export default function DoctorsPage() {
       Rejected: 0,
     }
   }, [doctors])
-
-  const statusClass = (status: string) => {
-    if (status === 'Approved') return 'bg-[#DBF1CF] text-[#335F1B] border border-[#C2E7B0]'
-    if (status === 'Pending') return 'bg-[#FFFBED] text-[#E45412] border border-[#FBEFCD]'
-    return 'bg-[#FFE2E2] text-[#B91C1C] border border-[#FCD2D2]'
-  }
-
-  const statusIcon = (status: string) => {
-    if (status === 'Approved') return <FaCheckCircle />
-    if (status === 'Pending') return <FaClock />
-    return <FaTimesCircle />
-  }
 
   return (
     <DashboardLayout>
@@ -176,7 +142,7 @@ export default function DoctorsPage() {
             </div>
 
             <button className="h-12 px-5 rounded-xl border border-[#EAEEF6] bg-white text-[#2B3E64] text-sm font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">
-              <FaFilter className="text-xs text-slate-400" />
+              <FaFilter className="text-xs text-[#889ABF]" />
               Filters
             </button>
 
@@ -192,13 +158,18 @@ export default function DoctorsPage() {
 
         {/* --- TABS --- */}
         <section className="flex items-center gap-3 mb-5 overflow-x-auto pb-1">
-          {(Object.keys(counts) as Array<keyof typeof counts>).map((tab) => {
-            const active = activeTab === tab
+          {[
+            { id: 'All', label: `All (${counts.All})` },
+            { id: 'Approved', label: `Approved (${counts.Approved})` },
+            { id: 'Pending', label: `Pending (${counts.Pending})` },
+            { id: 'Rejected', label: `Rejected (${counts.Rejected})` }
+          ].map((tab) => {
+            const active = activeTab === tab.id
             return (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative min-w-[135px] px-5 py-2.5 rounded-xl text-sm font-bold border transition-colors cursor-pointer whitespace-nowrap ${
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative min-w-fit px-5 py-2.5 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap cursor-pointer ${
                   active
                     ? 'text-blue-600 border-blue-200 shadow-sm shadow-blue-500/5'
                     : 'bg-white border-[#EAEEF6] text-[#2B3E64] hover:bg-slate-50'
@@ -211,9 +182,7 @@ export default function DoctorsPage() {
                     transition={{ type: "spring", stiffness: 350, damping: 28 }}
                   />
                 )}
-                <span className="relative z-10">
-                  {tab} ({counts[tab]})
-                </span>
+                <span className="relative z-10">{tab.label}</span>
               </button>
             )
           })}
@@ -226,11 +195,11 @@ export default function DoctorsPage() {
               <thead className="bg-[#FCFDFF] border-b border-[#EAEEF6] text-[#889ABF]">
                 <tr>
                   <th className="text-left px-6 py-4 text-[11px] tracking-wider font-bold uppercase">Doctor Name</th>
-                  <th className="text-left px-5 py-4 text-[11px] tracking-wider font-bold uppercase">Specialty</th>
-                  <th className="text-left px-5 py-4 text-[11px] tracking-wider font-bold uppercase">Hospital</th>
-                  <th className="text-left px-5 py-4 text-[11px] tracking-wider font-bold uppercase">Status</th>
-                  <th className="text-left px-5 py-4 text-[11px] tracking-wider font-bold uppercase">Joined On</th>
-                  <th className="text-center px-5 py-4 text-[11px] tracking-wider font-bold uppercase">Actions</th>
+                  <th className="text-left px-4 py-4 text-[11px] tracking-wider font-bold uppercase">Specialty</th>
+                  <th className="text-left px-4 py-4 text-[11px] tracking-wider font-bold uppercase">Hospital</th>
+                  <th className="text-left px-4 py-4 text-[11px] tracking-wider font-bold uppercase">Status</th>
+                  <th className="text-left px-4 py-4 text-[11px] tracking-wider font-bold uppercase">Joined On</th>
+                  <th className="text-center px-4 py-4 text-[11px] tracking-wider font-bold uppercase">Actions</th>
                 </tr>
               </thead>
 
@@ -248,80 +217,88 @@ export default function DoctorsPage() {
                     </tr>
                   ) : filteredDoctors.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-500 font-semibold">
-                        No doctors match the filters.
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400">
+                            <FaUserMd size={20} />
+                          </div>
+                          <p className="text-sm font-bold text-slate-700">No Doctors Found</p>
+                          <p className="text-xs text-slate-500 mt-1 font-semibold">Try adjusting your filters or search query.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredDoctors.map((doctor) => {
-                      const specialtyName = doctor.specializations?.name || 'Doctor'
-                      const hospitalName = doctor.hospitals?.name || 'N/A'
-                      const statusText = doctor.is_active ? 'Approved' : 'Pending'
-                      const joinedDate = formatDate(doctor.created_at)
-                      const imageUrl = doctor.image || `https://randomuser.me/api/portraits/men/${(doctor.id?.charCodeAt(0) || 0) % 99 + 1}.jpg`
-                      
-                      return (
-                        <motion.tr 
-                          key={doctor.id}
-                          variants={rowVariants}
-                          whileHover={{ backgroundColor: "#fafbfc" }}
-                          className="border-t border-[#EAEEF6]/60 transition-colors group"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={imageUrl}
-                                alt={doctor.name}
-                                className="w-10 h-10 rounded-xl object-cover border border-slate-100/80 shadow-sm"
-                              />
-                              <span className="font-bold text-slate-800">{doctor.name}</span>
+                    filteredDoctors.map((doctor) => (
+                      <motion.tr
+                        key={doctor.id}
+                        variants={rowVariants}
+                        whileHover={{ backgroundColor: "#fafbfc" }}
+                        className="border-b border-[#F3F5FA] transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 shrink-0 shadow-sm">
+                              <FaUserMd size={16} />
                             </div>
-                          </td>
+                            <span className="font-bold text-slate-800">{doctor.name}</span>
+                          </div>
+                        </td>
 
-                          <td className="px-5 py-4 text-[#2B3E64] font-semibold">{specialtyName}</td>
-                          <td className="px-5 py-4 text-[#2B3E64] font-semibold">{hospitalName}</td>
+                        <td className="px-4 py-4 text-[#2B3E64] font-semibold">
+                          {doctor.specialization_name || doctor.specialty || 'Doctor'}
+                        </td>
 
-                          <td className="px-5 py-4">
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${statusClass(statusText)}`}>
-                              {statusIcon(statusText)}
-                              {statusText}
-                            </span>
-                          </td>
+                        <td className="px-4 py-4 text-[#2B3E64] font-semibold">
+                          {doctor.hospital_name || 'N/A'}
+                        </td>
 
-                          <td className="px-5 py-4 text-[#2B3E64] font-semibold">{joinedDate}</td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${
+                              doctor.is_active
+                                ? 'bg-green-100 text-green-700 border border-green-200'
+                                : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                            }`}
+                          >
+                            {doctor.is_active ? 'Approved' : 'Pending'}
+                          </span>
+                        </td>
 
-                          <td className="px-5 py-4 text-center">
-                            <div className="flex items-center justify-center gap-2.5">
-                              <button 
-                                onClick={() => router.push(`/doctors/profile?id=${doctor.id}`)}
-                                className="w-8 h-8 rounded-lg bg-blue-50 text-[#1B60E0] flex items-center justify-center hover:bg-[#1B60E0] hover:text-white transition-colors cursor-pointer" 
-                                title="View Profile"
-                              >
-                                <FaEye size={13} />
-                              </button>
-                              <button 
-                                onClick={() => setEditingDoctor(doctor)}
-                                className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-150 transition-colors cursor-pointer" 
-                                title="Edit Doctor"
-                              >
-                                <FaPen size={12} />
-                              </button>
-                              <button 
-                                onClick={() => toggleDoctorStatus(doctor)}
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-                                  doctor.is_active 
-                                    ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' 
-                                    : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
-                                }`} 
-                                title={doctor.is_active ? "Deactivate" : "Activate"}
-                              >
-                                <FaTrash size={12} />
-                              </button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      )
-                    })
+                        <td className="px-4 py-4 text-[#2B3E64] font-semibold">
+                          {formatDate(doctor.created_at)}
+                        </td>
+
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-2.5">
+                            <button 
+                              className="w-8 h-8 rounded-lg bg-blue-50 text-[#0066FF] flex items-center justify-center hover:bg-[#0066FF] hover:text-white transition-colors cursor-pointer" 
+                              title="View Profile" 
+                              onClick={() => router.push(`/doctors/profile?id=${doctor.id}`)}
+                            >
+                              <FaEye size={13} />
+                            </button>
+                            <button 
+                              onClick={() => setEditingDoctor(doctor)}
+                              className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-150 transition-colors cursor-pointer" 
+                              title="Edit Doctor"
+                            >
+                              <FaPen size={11} />
+                            </button>
+                            <button 
+                              onClick={() => toggleDoctorStatus(doctor)}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                doctor.is_active 
+                                  ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' 
+                                  : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                              }`} 
+                              title={doctor.is_active ? "Deactivate" : "Activate"}
+                            >
+                              <FaTrash size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
                   )}
                 </motion.tbody>
               </AnimatePresence>
@@ -348,67 +325,64 @@ export default function DoctorsPage() {
               </button>
             </div>
           </div>
-          </section>
-    {editingDoctor && (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl border border-gray-150 max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-slate-800">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Edit Doctor Profile</h3>
-          <form onSubmit={async (e) => {
-            e.preventDefault()
-            setLoading(true)
-            const { error } = await supabase
-              .from('doctors')
-              .update({
-                name: editingDoctor.name,
-                email: editingDoctor.email,
-                phone: editingDoctor.phone,
-                experience_years: parseInt(editingDoctor.experience_years || '0'),
-                consultation_fee: parseFloat(editingDoctor.consultation_fee || '0')
-              })
-              .eq('id', editingDoctor.id)
-            
-            setLoading(false)
-            if (error) {
-              alert(error.message)
-            } else {
-              setEditingDoctor(null)
-              alert('Doctor profile updated successfully!')
-              fetchDoctors()
-            }
-          }} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Doctor Name</label>
-              <input type="text" required value={editingDoctor.name} onChange={(e) => setEditingDoctor({...editingDoctor, name: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+        </section>
+        {editingDoctor && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-gray-150 max-w-lg w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-slate-800">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Edit Doctor Profile</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                setLoading(true)
+                try {
+                  const docRef = ref(db, `doctors/${editingDoctor.id}`)
+                  await update(docRef, {
+                    name: editingDoctor.name,
+                    email: editingDoctor.email,
+                    phone: editingDoctor.phone,
+                    experience_years: parseInt(editingDoctor.experience_years || '0'),
+                    consultation_fee: parseFloat(editingDoctor.consultation_fee || '0')
+                  })
+                  setEditingDoctor(null)
+                  alert('Doctor profile updated successfully!')
+                } catch (err: any) {
+                  alert(err.message || 'Failed to update doctor profile')
+                } finally {
+                  setLoading(false)
+                }
+              }} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Doctor Name</label>
+                  <input type="text" required value={editingDoctor.name} onChange={(e) => setEditingDoctor({...editingDoctor, name: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Experience (Years)</label>
+                    <input type="number" required value={editingDoctor.experience_years} onChange={(e) => setEditingDoctor({...editingDoctor, experience_years: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Consultation Fee</label>
+                    <input type="number" required value={editingDoctor.consultation_fee} onChange={(e) => setEditingDoctor({...editingDoctor, consultation_fee: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Email</label>
+                    <input type="email" required value={editingDoctor.email} onChange={(e) => setEditingDoctor({...editingDoctor, email: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Phone</label>
+                    <input type="text" required value={editingDoctor.phone} onChange={(e) => setEditingDoctor({...editingDoctor, phone: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <button type="button" onClick={() => setEditingDoctor(null)} className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Save Changes</button>
+                </div>
+              </form>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Experience (Years)</label>
-                <input type="number" required value={editingDoctor.experience_years} onChange={(e) => setEditingDoctor({...editingDoctor, experience_years: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Consultation Fee</label>
-                <input type="number" required value={editingDoctor.consultation_fee} onChange={(e) => setEditingDoctor({...editingDoctor, consultation_fee: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Email</label>
-                <input type="email" required value={editingDoctor.email} onChange={(e) => setEditingDoctor({...editingDoctor, email: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Phone</label>
-                <input type="text" required value={editingDoctor.phone} onChange={(e) => setEditingDoctor({...editingDoctor, phone: e.target.value})} className="w-full border border-slate-200 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500 font-semibold text-slate-800" />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <button type="button" onClick={() => setEditingDoctor(null)} className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer">Save Changes</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
-  </main>
-</DashboardLayout>
+          </div>
+        )}
+      </main>
+    </DashboardLayout>
   )
 }
