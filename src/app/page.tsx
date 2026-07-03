@@ -453,8 +453,18 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm font-medium text-slate-500 mt-6">
-            Need help? <Link href="/support" className="text-blue-600 hover:underline">Contact Support</Link>
-          </p>
+  Need help?{' '}
+  <button
+    type="button"
+    onClick={() => {
+      alert("Please sign in to access Contact Support.")
+      router.push("/")
+    }}
+    className="text-blue-600 hover:underline font-medium"
+  >
+    Contact Support
+  </button>
+</p>
         </div>
 
         <div className="w-full mt-auto pt-6 flex justify-between items-center text-[11px] font-medium text-slate-400 max-w-md mx-auto shrink-0">
