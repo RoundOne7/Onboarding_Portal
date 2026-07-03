@@ -1,76 +1,169 @@
-// 'use client'
-
-// import { useState } from 'react'
-// import Sidebar from './Sidebar'
-
-// export default function DashboardLayout({
-//   children,
-// }: {
-//   children: React.ReactNode
-// }) {
-//   // 1. Manage the sidebar state here at the layout level
-//   const [isCollapsed, setIsCollapsed] = useState(false)
-
-//   return (
-//     <div className="flex min-h-screen bg-[#f8fafc]">
-      
-//       {/* 2. Pass the state and updater function down to the Sidebar */}
-//       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-
-//       {/* 3. Apply a dynamic margin-left that matches the exact width of your sidebar */}
-//       <div 
-//         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-//           isCollapsed ? 'ml-[88px]' : 'ml-[260px]'
-//         }`}
-//       >
-//         <main className="flex-1 p-6">
-//           {children}
-//         </main>
-//       </div>
-      
-//     </div>
-//   )
-// }
-
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Sidebar from './Sidebar'
+import { auth, db } from '../../lib/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { ref, push, get, query, orderByChild, equalTo } from 'firebase/database'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  
-  // 1. Add a new state to track if the component has fully loaded in the browser
   const [isMounted, setIsMounted] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Default inactivity timeout: 30 minutes in milliseconds
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000 
+
+  const logAuditActivity = async (email: string, action: string) => {
+    try {
+      await push(ref(db, 'audit_logs'), {
+        user_email: email,
+        user_role: 'N/A',
+        action: action,
+        ip_address: 'Client Connection',
+        user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
+        created_at: new Date().toISOString()
+      })
+    } catch (e) {
+      console.error('Failed to log audit activity:', e)
+    }
+  }
+
+  const handleLogout = async (message: string, email?: string) => {
+    if (email) {
+      await logAuditActivity(email, `Logout: ${message}`)
+    }
+    await signOut(auth)
+    alert(message)
+    router.push('/')
+  }
+
+  // Session Timeout / Inactivity listener
+  const resetInactivityTimeout = (email: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      handleLogout('Session expired due to inactivity.', email)
+    }, INACTIVITY_TIMEOUT)
+  }
 
   useEffect(() => {
-    // Check memory first
+    let email = ''
+    let isCleanup = false
+    const activityEvents = ['mousemove', 'keypress', 'click', 'scroll']
+    const handleUserActivity = () => {
+      if (email) resetInactivityTimeout(email)
+    }
+    
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (isCleanup) return
+      
+      if (!user) {
+        router.push('/')
+        return
+      }
+
+      email = user.email || ''
+
+      try {
+        // Verify user in internal_users Realtime Database and check if active
+        const userRef = ref(db, 'internal_users')
+        const q = query(userRef, orderByChild('email'), equalTo(email))
+        const snapshot = await get(q)
+        
+        if (isCleanup) return
+
+        if (!snapshot.exists()) {
+          await logAuditActivity(email, 'Failed Authorization: User record not found in registry')
+          await signOut(auth)
+          alert('Unauthorized Access: Your account is not registered in the portal registry.')
+          router.push('/')
+          return
+        }
+
+        let activeUserVal: any = null
+        snapshot.forEach((child) => {
+          if (child.val().is_active === true) {
+            activeUserVal = child.val()
+          }
+        })
+
+        if (!activeUserVal) {
+          await logAuditActivity(email, 'Failed Authorization: Account is inactive')
+          await signOut(auth)
+          alert('Unauthorized Access: Your account is inactive.')
+          router.push('/')
+          return
+        }
+
+        await logAuditActivity(email, 'Successful Authorization Verification')
+        setLoading(false)
+
+        // Start listening to inactivity events
+        resetInactivityTimeout(email)
+        activityEvents.forEach(event => {
+          window.addEventListener(event, handleUserActivity)
+        })
+      } catch (err) {
+        console.error("Auth check failed:", err)
+        router.push('/')
+      }
+    })
+
     const savedState = localStorage.getItem('sidebarState')
     if (savedState) {
       setIsCollapsed(JSON.parse(savedState))
     }
-    // Now tell React we are ready to safely show the UI
     setIsMounted(true)
-  }, [])
+
+    return () => {
+      isCleanup = true
+      unsubscribe()
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity)
+      })
+    }
+  }, [router])
 
   const handleToggleSidebar = (collapsed: boolean) => {
     setIsCollapsed(collapsed)
     localStorage.setItem('sidebarState', JSON.stringify(collapsed))
   }
 
-  // 2. Prevent rendering the layout until we know the correct sidebar state.
-  // This completely eliminates the flash!
-  if (!isMounted) {
-    return <div className="flex h-screen bg-gray-50 overflow-hidden" /> 
+  if (!isMounted || loading) {
+    return (
+      <div className="flex h-screen bg-gray-50 overflow-hidden items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-slate-500">Checking authorization...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-[#f5f7fb] overflow-hidden">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={handleToggleSidebar} />
       
-      <div className={`flex-1 h-screen overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-[88px]' : 'ml-[260px]'}`}>
-        {children}
-      </div>
+      <motion.div 
+        initial={false}
+        animate={{ marginLeft: isCollapsed ? 88 : 260 }}
+        transition={{ type: "spring", stiffness: 300, damping: 26 }}
+        className="flex-1 h-screen min-w-0 overflow-y-auto"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="h-full flex flex-col w-full min-w-0"
+        >
+          {children}
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

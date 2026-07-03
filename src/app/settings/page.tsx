@@ -1,208 +1,150 @@
-// 'use client'
-
-// import { FiSettings } from 'react-icons/fi'
-// import DashboardLayout
-//     from '../../components/layout/DashboardLayout'
-
-// export default function SettingsPage() {
-
-//     return (
-
-//         <DashboardLayout>
-
-//             <main  className='w-full flex-1 px-6 pt-5 pb-6 text-[#0B1528] h-full overflow-y-auto'>
-
-//                 {/* HEADER */}
-
-//                 <div className='mb-8'>
-
-//                     <div className='flex flex-row items-center gap-3'> 
-//                                                                         <div className="min-w-[32px] w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xl">
-//                                                                                   <FiSettings className="text-lg" />
-//                                                                         </div>
-//                                                                         <h1 className="text-4xl font-bold text-slate-800">Settings</h1>
-//                                                                     </div>
-
-//                     <p className="text-xs text-[#889ABF] mt-1 font-medium">
-//                             Dashboard &gt; <span className="text-[#2B3E64]">Settings</span>
-//                         </p>
-
-//                 </div>
-
-//                 {/* CONTENT */}
-
-//                 <div
-//                     className='
-//                         bg-white
-//                         rounded-3xl
-//                         p-8
-//                         border
-//                         border-gray-200
-//                         shadow-sm
-//                     '
-//                 >
-
-//                     <h2
-//                         className='
-//                             text-2xl
-//                             font-semibold
-//                             mb-6
-//                         '
-//                     >
-
-//                         General Settings
-
-//                     </h2>
-
-//                     <div className='space-y-6'>
-
-//                         {/* APP NAME */}
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 Portal Name
-
-//                             </label>
-
-//                             <input
-//                                 type='text'
-//                                 defaultValue='Doctor Portal'
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                 '
-//                             />
-
-//                         </div>
-
-//                         {/* SUPPORT EMAIL */}
-
-//                         <div>
-
-//                             <label
-//                                 className='
-//                                     block
-//                                     text-sm
-//                                     font-semibold
-//                                     mb-2
-//                                 '
-//                             >
-
-//                                 Support Email
-
-//                             </label>
-
-//                             <input
-//                                 type='email'
-//                                 placeholder='support@example.com'
-
-//                                 className='
-//                                     w-full
-//                                     border
-//                                     border-gray-200
-//                                     rounded-2xl
-//                                     px-5
-//                                     py-4
-//                                     outline-none
-//                                 '
-//                             />
-
-//                         </div>
-
-//                         {/* SAVE */}
-
-//                         <button
-//                             className='
-//                                 bg-black
-//                                 text-white
-//                                 px-6
-//                                 py-4
-//                                 rounded-2xl
-//                                 font-semibold
-//                             '
-//                         >
-
-//                             Save Settings
-
-//                         </button>
-
-//                     </div>
-
-//                 </div>
-
-//             </main>
-
-//         </DashboardLayout>
-//     )
-// }
-
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update, get, set, push } from 'firebase/database'
 import { 
     FiUser, FiBell, FiShield, FiSave, FiSettings, 
-    FiUsers, FiActivity, FiPlus, FiClock 
+    FiUsers, FiActivity, FiPlus, FiClock
 } from 'react-icons/fi'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function SettingsPage() {
-    // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('General')
     const [isSaving, setIsSaving] = useState(false)
+    const [currentUser, setCurrentUser] = useState<any>({ name: 'System User', email: 'admin@quickcheck.com', role: 'Super Admin' })
 
-    // Form States
+    // Database state mappings
+    const [brandingSettings, setBrandingSettings] = useState<any>({ organization_name: 'QuickCheck', support_email: 'support@quickcheck.com' })
+    const [regionalSettings, setRegionalSettings] = useState<any>({ timezone: 'Asia/Kolkata', language: 'en' })
+    const [securitySettings, setSecuritySettings] = useState<any>({ session_timeout_minutes: 30, two_factor_auth: false })
+    
     const [alerts, setAlerts] = useState({
         newHospital: true,
         newDoctor: true,
         documentExpiry: false,
-        weeklyDigest: true,
-    })
-    
-    const [security, setSecurity] = useState({
-        twoFactor: false,
-        sessionTimeout: '30',
     })
 
-    // Dummy Data for Team Management
-    const teamMembers = [
-        { id: 1, name: 'System Administrator', email: 'admin@quickcheck.com', role: 'Super Admin', status: 'Active' },
-        { id: 2, name: 'Sarah Jenkins', email: 'sarah.j@quickcheck.com', role: 'Data Verifier', status: 'Active' },
-        { id: 3, name: 'Dr. Arun Patel', email: 'arun.p@quickcheck.com', role: 'Medical Reviewer', status: 'Pending' },
-    ]
+    const [teamMembers, setTeamMembers] = useState<any[]>([])
+    const [auditLogs, setAuditLogs] = useState<any[]>([])
+    const [searchLog, setSearchLog] = useState('')
 
-    // Dummy Data for Audit Logs
-    const auditLogs = [
-        { id: 1, action: 'Approved Hospital: City Care', user: 'Sarah Jenkins', time: '10:45 AM, Today', ip: '192.168.1.45' },
-        { id: 2, action: 'Updated Security Settings', user: 'System Administrator', time: '09:12 AM, Today', ip: '10.0.0.12' },
-        { id: 3, action: 'Rejected Doctor: Profile Incomplete', user: 'Sarah Jenkins', time: '04:30 PM, Yesterday', ip: '192.168.1.45' },
-        { id: 4, action: 'Invited new user: Arun Patel', user: 'System Administrator', time: '11:00 AM, Yesterday', ip: '10.0.0.12' },
-    ]
+    useEffect(() => {
+        loadSettingsData()
 
-    // --- HANDLERS ---
-    const handleSave = () => {
-        setIsSaving(true)
-        setTimeout(() => {
-            setIsSaving(false)
-            alert("Settings saved successfully!")
-        }, 1000)
+        const usersRef = ref(db, 'internal_users')
+        const unsubUsers = onValue(usersRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setTeamMembers(list)
+        }, (err) => console.error(err))
+
+        const auditsRef = ref(db, 'audit_logs')
+        const unsubAudits = onValue(auditsRef, (snapshot) => {
+            const list: any[] = []
+            snapshot.forEach((child) => {
+                list.push({ id: child.key, ...child.val() })
+            })
+            list.reverse()
+            setAuditLogs(list)
+        }, (err) => console.error(err))
+
+        return () => {
+            unsubUsers()
+            unsubAudits()
+        }
+    }, [])
+
+    async function loadSettingsData() {
+        const user = auth.currentUser
+        if (user) {
+            setCurrentUser({
+                name: user.displayName || user.email?.split('@')[0] || 'Administrator',
+                email: user.email || '',
+                role: 'Super Admin'
+            })
+        }
+
+        fetchSettings()
     }
 
-    // --- HELPER COMPONENTS ---
+    async function fetchSettings() {
+        try {
+            const snaps = await get(ref(db, 'settings'))
+            if (snaps.exists()) {
+                snaps.forEach((docSnapshot) => {
+                    const key = docSnapshot.key
+                    const val = docSnapshot.val().value
+                    if (key === 'branding') setBrandingSettings(val)
+                    if (key === 'regional') setRegionalSettings(val)
+                    if (key === 'security') setSecuritySettings(val)
+                })
+            }
+        } catch (e) {
+            console.error('Fetch settings failed:', e)
+        }
+    }
+
+    const handleSaveSettings = async () => {
+        setIsSaving(true)
+        try {
+            await set(ref(db, 'settings/branding'), { value: brandingSettings })
+            await set(ref(db, 'settings/regional'), { value: regionalSettings })
+            await set(ref(db, 'settings/security'), { value: securitySettings })
+
+            // Log save activity
+            await push(ref(db, 'audit_logs'), {
+                user_email: currentUser.email,
+                action: 'Updated system security and branding settings configurations',
+                ip_address: 'Client Connection',
+                created_at: new Date().toISOString()
+            })
+
+            alert('Settings saved successfully!')
+        } catch (e: any) {
+            alert(e.message || 'Failed to save settings.')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const inviteMember = async () => {
+        const email = prompt('Enter email address of the team member to invite:')
+        if (!email) return
+        const role = prompt('Enter role (Super Admin, Verifier, Operator, Support):', 'Verifier')
+        if (!role) return
+
+        try {
+            await push(ref(db, 'internal_users'), {
+                email,
+                role,
+                is_active: true,
+                created_at: new Date().toISOString()
+            })
+            alert('Team member added successfully!')
+        } catch (e: any) {
+            alert(e.message || 'Failed to invite team member.')
+        }
+    }
+
+    const toggleMemberStatus = async (member: any) => {
+        try {
+            const memberRef = ref(db, `internal_users/${member.id}`)
+            await update(memberRef, { is_active: !member.is_active })
+        } catch (e: any) {
+            alert(e.message || 'Failed to toggle status.')
+        }
+    }
+
+    const filteredAuditLogs = auditLogs.filter(log => 
+        log.action?.toLowerCase().includes(searchLog.toLowerCase()) ||
+        log.user_email?.toLowerCase().includes(searchLog.toLowerCase())
+    )
+
     const Toggle = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
         <button 
             type="button"
@@ -215,242 +157,326 @@ export default function SettingsPage() {
 
     return (
         <DashboardLayout>
-            <main className="w-full flex-1 px-6 pt-5 pb-6 text-[#0B1528] h-full overflow-y-auto bg-[#f8fafc]">
+            <main className="w-full min-h-full flex-1 px-8 pt-6 pb-8 text-[#0B1528] overflow-y-auto bg-[#f5f7fb]">
+                
                 
                 {/* --- HEADER --- */}
                 <section className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="min-w-[32px] w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center text-xl shadow-sm">
+                        <div className="min-w-[36px] w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-xl shadow-md shadow-blue-500/10">
                             <FiSettings className="text-[22px]" />
                         </div>
                         <div>
-                            <h1 className="text-[22px] font-bold text-slate-800">Control Center</h1>
-                            <p className="text-xs text-[#889ABF] mt-1 font-medium">
+                            <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">Control Center</h1>
+                            <p className="text-xs text-[#889ABF] mt-2 font-bold">
                                 Dashboard &gt; <span className="text-[#2B3E64]">Settings</span>
                             </p>
                         </div>
                     </div>
                     
-                    <button 
-                        onClick={handleSave}
+                    <motion.button 
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={handleSaveSettings}
                         disabled={isSaving}
-                        className="h-10 px-6 rounded-xl bg-[#0066FF] hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_0_rgba(0,102,255,0.39)] disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="h-11 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-500/10 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FiSave size={16} />
                         {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    </motion.button>
                 </section>
 
                 {/* --- TAB NAVIGATION --- */}
                 <section className="flex items-center gap-3 mb-6 overflow-x-auto pb-1 border-b border-[#EAEEF6]">
-                    {['General', 'Security & Alerts', 'Team Management', 'Audit Logs'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
-                                activeTab === tab
-                                    ? 'border-[#0066FF] text-[#0066FF]'
-                                    : 'border-transparent text-[#889ABF] hover:text-slate-700 hover:border-gray-300'
-                            }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
+                    {['General', 'Security & Alerts', 'Team Management', 'Audit Logs'].map((tab) => {
+                        const active = activeTab === tab
+                        return (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`relative px-4 py-3.5 text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                                    active ? 'text-[#0066FF]' : 'text-[#889ABF] hover:text-slate-700'
+                                }`}
+                            >
+                                <span className="relative z-10">{tab}</span>
+                                {active && (
+                                    <motion.div
+                                        layoutId="activeSettingsTabBorder"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0066FF]"
+                                        transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                                    />
+                                )}
+                            </button>
+                        )
+                    })}
                 </section>
 
                 {/* --- TAB CONTENT AREAS --- */}
-                <div className="max-w-6xl">
-                    
-                    {/* 1. GENERAL TAB (Profile) */}
-                    {activeTab === 'General' && (
-                        <div className="animate-in fade-in duration-300">
-                            <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm mb-6">
-                                <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
-                                    <FiUser className="text-[#0066FF]" size={20} />
-                                    <h2 className="text-lg font-bold text-slate-800">My Profile</h2>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                                        <input type='text' defaultValue='System Administrator' className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white" />
+                <div className="w-full">
+                    <AnimatePresence mode="wait">
+                        {/* 1. GENERAL TAB (Profile & Branding) */}
+                        {activeTab === 'General' && (
+                            <motion.div
+                                key="General"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
+                                transition={{ duration: 0.25 }}
+                                className="space-y-6"
+                            >
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
+                                        <FiUser className="text-[#0066FF]" size={20} />
+                                        <h2 className="text-lg font-bold text-slate-800">My Profile</h2>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                                        <input type='email' defaultValue='admin@quickcheck.com' className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                                        <input type='text' disabled defaultValue='Super Admin' className="w-full border border-gray-100 px-4 py-3 rounded-xl text-sm bg-gray-50 text-gray-500 cursor-not-allowed" />
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    )}
 
-                    {/* 2. SECURITY & ALERTS TAB */}
-                    {activeTab === 'Security & Alerts' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-300">
-                            {/* Security Settings */}
-                            <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm h-fit">
-                                <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
-                                    <FiShield className="text-[#0066FF]" size={20} />
-                                    <h2 className="text-lg font-bold text-slate-800">Access Security</h2>
-                                </div>
-
-                                <div className="flex flex-col gap-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="pr-4">
-                                            <p className="text-sm font-semibold text-slate-800">Two-Factor Authentication (2FA)</p>
-                                            <p className="text-xs text-[#889ABF] mt-1">Require an extra security code when logging in.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Full Name</label>
+                                            <input type='text' readOnly value={currentUser.name} className="w-full border border-slate-100 px-4 py-3 rounded-xl text-sm bg-slate-50 text-slate-400 cursor-not-allowed font-semibold" />
                                         </div>
-                                        <Toggle checked={security.twoFactor} onChange={() => setSecurity({...security, twoFactor: !security.twoFactor})} />
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Email Address</label>
+                                            <input type='email' readOnly value={currentUser.email} className="w-full border border-slate-100 px-4 py-3 rounded-xl text-sm bg-slate-50 text-slate-400 cursor-not-allowed font-semibold" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Role</label>
+                                            <input type='text' disabled defaultValue='Super Admin' className="w-full border border-slate-100 px-4 py-3 rounded-xl text-sm bg-slate-50 text-slate-400 cursor-not-allowed font-semibold" />
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
+                                        <FiSettings className="text-[#0066FF]" size={20} />
+                                        <h2 className="text-lg font-bold text-slate-800">Portal Branding</h2>
                                     </div>
 
-                                    <hr className="border-[#EAEEF6]" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Organization Name</label>
+                                            <input 
+                                                type='text' 
+                                                value={brandingSettings.organization_name || ''} 
+                                                onChange={(e) => setBrandingSettings({ ...brandingSettings, organization_name: e.target.value })}
+                                                className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-slate-800" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Support Email Address</label>
+                                            <input 
+                                                type='email' 
+                                                value={brandingSettings.support_email || ''} 
+                                                onChange={(e) => setBrandingSettings({ ...brandingSettings, support_email: e.target.value })}
+                                                className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-slate-800" 
+                                            />
+                                        </div>
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Session Timeout</label>
-                                        <p className="text-xs text-[#889ABF] mb-3">Automatically log out after inactivity.</p>
-                                        <select 
-                                            value={security.sessionTimeout}
-                                            onChange={(e) => setSecurity({...security, sessionTimeout: e.target.value})}
-                                            className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700 bg-white"
+                        {/* 2. SECURITY & ALERTS TAB */}
+                        {activeTab === 'Security & Alerts' && (
+                            <motion.div
+                                key="Security"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
+                                transition={{ duration: 0.25 }}
+                                className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                            >
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm h-fit">
+                                    <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
+                                        <FiShield className="text-[#0066FF]" size={20} />
+                                        <h2 className="text-lg font-bold text-slate-800">Access Security</h2>
+                                    </div>
+
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="pr-4">
+                                                <p className="text-sm font-bold text-slate-800">Two-Factor Authentication (2FA)</p>
+                                                <p className="text-xs text-[#889ABF] mt-1 font-semibold">Require an extra security code when logging in.</p>
+                                            </div>
+                                            <Toggle checked={securitySettings.two_factor_auth || false} onChange={() => setSecuritySettings({...securitySettings, two_factor_auth: !securitySettings.two_factor_auth})} />
+                                        </div>
+
+                                        <hr className="border-[#EAEEF6]" />
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">Session Timeout</label>
+                                            <p className="text-xs text-[#889ABF] mb-3 font-semibold">Automatically log out after inactivity.</p>
+                                            <select 
+                                                value={securitySettings.session_timeout_minutes || 30}
+                                                onChange={(e) => setSecuritySettings({...securitySettings, session_timeout_minutes: parseInt(e.target.value)})}
+                                                className="w-full border border-slate-200 px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-slate-800 bg-white"
+                                            >
+                                                <option value="15">15 Minutes</option>
+                                                <option value="30">30 Minutes</option>
+                                                <option value="60">1 Hour</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm h-fit">
+                                    <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
+                                        <FiBell className="text-[#0066FF]" size={20} />
+                                        <h2 className="text-lg font-bold text-slate-800">Email Alerts</h2>
+                                    </div>
+
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="pr-4">
+                                                <p className="text-sm font-bold text-slate-800">New Hospital Applications</p>
+                                                <p className="text-[11px] text-[#889ABF] mt-1 font-semibold">Get notified when a hospital submits documents.</p>
+                                            </div>
+                                            <Toggle checked={alerts.newHospital} onChange={() => setAlerts({...alerts, newHospital: !alerts.newHospital})} />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="pr-4">
+                                                <p className="text-sm font-bold text-slate-800">New Doctor Registrations</p>
+                                                <p className="text-[11px] text-[#889ABF] mt-1 font-semibold">Alerts for new doctor profile creations.</p>
+                                            </div>
+                                            <Toggle checked={alerts.newDoctor} onChange={() => setAlerts({...alerts, newDoctor: !alerts.newDoctor})} />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="pr-4">
+                                                <p className="text-sm font-bold text-slate-800">Document Expiry Alerts</p>
+                                                <p className="text-[11px] text-[#889ABF] mt-1 font-semibold">Weekly warnings for expiring medical licenses.</p>
+                                            </div>
+                                            <Toggle checked={alerts.documentExpiry} onChange={() => setAlerts({...alerts, documentExpiry: !alerts.documentExpiry})} />
+                                        </div>
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+
+                        {/* 3. TEAM MANAGEMENT TAB */}
+                        {activeTab === 'Team Management' && (
+                            <motion.div
+                                key="Team"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-6 border-b border-[#EAEEF6] pb-4">
+                                        <div className="flex items-center gap-2">
+                                            <FiUsers className="text-[#0066FF]" size={20} />
+                                            <h2 className="text-lg font-bold text-slate-800">Staff Members</h2>
+                                        </div>
+                                        <button 
+                                            onClick={inviteMember}
+                                            className="h-9 px-4 rounded-lg bg-blue-50 text-[#0066FF] text-xs font-bold flex items-center gap-2 hover:bg-blue-100 transition-all cursor-pointer"
                                         >
-                                            <option value="15">15 Minutes</option>
-                                            <option value="30">30 Minutes</option>
-                                            <option value="60">1 Hour</option>
-                                            <option value="never">Never</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Notifications */}
-                            <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm h-fit">
-                                <div className="flex items-center gap-2 mb-6 border-b border-[#EAEEF6] pb-4">
-                                    <FiBell className="text-[#0066FF]" size={20} />
-                                    <h2 className="text-lg font-bold text-slate-800">Email Notifications</h2>
-                                </div>
-
-                                <div className="flex flex-col gap-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="pr-4">
-                                            <p className="text-sm font-semibold text-slate-800">New Hospital Applications</p>
-                                            <p className="text-[11px] text-[#889ABF] mt-1">Get notified when a hospital submits documents.</p>
-                                        </div>
-                                        <Toggle checked={alerts.newHospital} onChange={() => setAlerts({...alerts, newHospital: !alerts.newHospital})} />
+                                            <FiPlus size={14} /> Invite Member
+                                        </button>
                                     </div>
 
-                                    <div className="flex items-center justify-between">
-                                        <div className="pr-4">
-                                            <p className="text-sm font-semibold text-slate-800">New Doctor Registrations</p>
-                                            <p className="text-[11px] text-[#889ABF] mt-1">Alerts for new doctor profile creations.</p>
-                                        </div>
-                                        <Toggle checked={alerts.newDoctor} onChange={() => setAlerts({...alerts, newDoctor: !alerts.newDoctor})} />
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                        <div className="pr-4">
-                                            <p className="text-sm font-semibold text-slate-800">Document Expiry Alerts</p>
-                                            <p className="text-[11px] text-[#889ABF] mt-1">Weekly warnings for expiring medical licenses.</p>
-                                        </div>
-                                        <Toggle checked={alerts.documentExpiry} onChange={() => setAlerts({...alerts, documentExpiry: !alerts.documentExpiry})} />
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    )}
-
-                    {/* 3. TEAM MANAGEMENT TAB */}
-                    {activeTab === 'Team Management' && (
-                        <div className="animate-in fade-in duration-300">
-                            <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-6 border-b border-[#EAEEF6] pb-4">
-                                    <div className="flex items-center gap-2">
-                                        <FiUsers className="text-[#0066FF]" size={20} />
-                                        <h2 className="text-lg font-bold text-slate-800">Staff Members</h2>
-                                    </div>
-                                    <button className="h-9 px-4 rounded-lg bg-blue-50 text-[#0066FF] text-xs font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors">
-                                        <FiPlus size={14} /> Invite Member
-                                    </button>
-                                </div>
-
-                                <div className="overflow-x-auto w-full">
-                                    <table className="w-full whitespace-nowrap">
-                                        <thead>
-                                            <tr className="border-b border-[#EAEEF6] bg-[#FCFDFF]">
-                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#889ABF] uppercase tracking-wider">User</th>
-                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#889ABF] uppercase tracking-wider">Role</th>
-                                                <th className="text-left px-4 py-3 text-[11px] font-bold text-[#889ABF] uppercase tracking-wider">Status</th>
-                                                <th className="text-right px-4 py-3 text-[11px] font-bold text-[#889ABF] uppercase tracking-wider">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {teamMembers.map((member) => (
-                                                <tr key={member.id} className="border-b border-gray-50 last:border-0 hover:bg-[#FAFBFF]">
-                                                    <td className="px-4 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-bold text-slate-800">{member.name}</span>
-                                                            <span className="text-xs text-slate-500">{member.email}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-sm font-medium text-slate-600">{member.role}</td>
-                                                    <td className="px-4 py-4">
-                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${member.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                            {member.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right text-sm">
-                                                        <button className="text-blue-600 hover:underline font-medium">Edit</button>
-                                                    </td>
+                                    <div className="overflow-x-auto w-full">
+                                        <table className="w-full text-sm whitespace-nowrap">
+                                            <thead className="bg-[#FCFDFF] border-b border-[#EAEEF6] text-[#889ABF]">
+                                                <tr>
+                                                    <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider">User</th>
+                                                    <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider">Role</th>
+                                                    <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider">Status</th>
+                                                    <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider">Action</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-                        </div>
-                    )}
-
-                    {/* 4. AUDIT LOGS TAB */}
-                    {activeTab === 'Audit Logs' && (
-                        <div className="animate-in fade-in duration-300">
-                            <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-6 border-b border-[#EAEEF6] pb-4">
-                                    <div className="flex items-center gap-2">
-                                        <FiActivity className="text-[#0066FF]" size={20} />
-                                        <h2 className="text-lg font-bold text-slate-800">System Activity Log</h2>
+                                            </thead>
+                                            <tbody>
+                                                {teamMembers.map((member) => (
+                                                    <tr key={member.id} className="border-b border-gray-50 last:border-0 hover:bg-[#FAFBFF] transition-colors">
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-bold text-slate-800">{member.email.split('@')[0]}</span>
+                                                                <span className="text-xs text-slate-500 font-semibold mt-0.5">{member.email}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-sm font-bold text-slate-600">{member.role}</td>
+                                                        <td className="px-4 py-4">
+                                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${member.is_active ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                                {member.is_active ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-right text-sm">
+                                                            <button 
+                                                                onClick={() => toggleMemberStatus(member)}
+                                                                className={`font-bold hover:underline cursor-pointer ${member.is_active ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
+                                                            >
+                                                                {member.is_active ? 'Deactivate' : 'Activate'}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <button className="h-9 px-4 rounded-lg border border-gray-200 text-slate-600 text-xs font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors">
-                                        Export Log (CSV)
-                                    </button>
-                                </div>
+                                </section>
+                            </motion.div>
+                        )}
 
-                                <div className="flex flex-col gap-4">
-                                    {auditLogs.map((log) => (
-                                        <div key={log.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors gap-3">
-                                            <div className="flex items-start gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 text-gray-400 mt-0.5">
-                                                    <FiClock size={14} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-800">{log.action}</p>
-                                                    <p className="text-xs text-slate-500 mt-0.5">
-                                                        Performed by <span className="font-medium text-slate-700">{log.user}</span> • IP: {log.ip}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-xs font-medium text-[#889ABF] whitespace-nowrap">
-                                                {log.time}
-                                            </div>
+                        {/* 4. AUDIT LOGS TAB */}
+                        {activeTab === 'Audit Logs' && (
+                            <motion.div
+                                key="Audit"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -12 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <section className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-sm">
+                                    <div className="flex items-center justify-between mb-6 border-b border-[#EAEEF6] pb-4 gap-4 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <FiActivity className="text-[#0066FF]" size={20} />
+                                            <h2 className="text-lg font-bold text-slate-800">System Activity Log</h2>
                                         </div>
-                                    ))}
-                                </div>
-                            </section>
-                        </div>
-                    )}
+                                        <div className="flex items-center gap-3">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Search log..." 
+                                                value={searchLog}
+                                                onChange={(e) => setSearchLog(e.target.value)}
+                                                className="border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
 
+                                    <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto pr-2">
+                                        {filteredAuditLogs.length === 0 ? (
+                                            <p className="text-xs text-slate-400 font-semibold py-4 text-center">No matching activities found.</p>
+                                        ) : (
+                                            filteredAuditLogs.map((log) => (
+                                                <motion.div 
+                                                    key={log.id} 
+                                                    whileHover={{ x: 4 }}
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-100 bg-gray-50/50 hover:bg-gray-50 transition-all gap-3"
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shrink-0 text-gray-400 mt-0.5 shadow-sm">
+                                                            <FiClock size={14} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-800">{log.action}</p>
+                                                            <p className="text-xs text-slate-500 mt-0.5 font-semibold">
+                                                                Performed by <span className="font-bold text-slate-700">{log.user_email}</span> • IP: {log.ip_address || 'N/A'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-xs font-bold text-[#889ABF] whitespace-nowrap">
+                                                        {new Date(log.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </motion.div>
+                                            ))
+                                        )}
+                                    </div>
+                                </section>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </main>
         </DashboardLayout>

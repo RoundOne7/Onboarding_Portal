@@ -1,0 +1,54 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "internal_users": {
+      ".read": "true",
+      ".write": "true",
+      ".indexOn": ["email"]
+    },
+    "audit_logs": {
+      ".read": "true",
+      ".write": "true",
+      ".indexOn": ["affected_id"]
+    },
+    "doctor_schedules": {
+      ".read": "true",
+      ".write": "true",
+      ".indexOn": ["doctor_id"]
+    },
+    "appointment_slots": {
+      ".read": "true",
+      ".write": "true",
+      ".indexOn": ["doctor_id"]
+    },
+    "settings": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "qualifications": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "specializations": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "hospitals": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "doctors": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "appointments": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "tickets": {
+      ".read": "true",
+      ".write": "true"
+    }
+  }
+}
