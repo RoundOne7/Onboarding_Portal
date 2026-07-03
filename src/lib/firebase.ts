@@ -6,6 +6,7 @@ import { getStorage } from "firebase/storage"
 const firebaseConfig = {
   apiKey: "AIzaSyB8zRmlZjIheh6TvodyQpQUro7pdOBqvK8",
   authDomain: "quiick-check.firebaseapp.com",
+  databaseURL: "https://quiick-check-default-rtdb.firebaseio.com",
   projectId: "quiick-check",
   storageBucket: "quiick-check.firebasestorage.app",
   messagingSenderId: "759271228197",
