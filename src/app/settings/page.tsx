@@ -157,7 +157,8 @@ export default function SettingsPage() {
 
     return (
         <DashboardLayout>
-            <main className="w-full flex-1 px-8 pt-6 pb-8 text-[#0B1528] h-full overflow-y-auto bg-[#f5f7fb]">
+            <main className="w-full min-h-full flex-1 px-8 pt-6 pb-8 text-[#0B1528] overflow-y-auto bg-[#f5f7fb]">
+                
                 
                 {/* --- HEADER --- */}
                 <section className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
@@ -211,7 +212,7 @@ export default function SettingsPage() {
                 </section>
 
                 {/* --- TAB CONTENT AREAS --- */}
-                <div className="max-w-6xl">
+                <div className="w-full">
                     <AnimatePresence mode="wait">
                         {/* 1. GENERAL TAB (Profile & Branding) */}
                         {activeTab === 'General' && (
