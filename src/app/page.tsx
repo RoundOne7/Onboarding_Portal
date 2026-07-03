@@ -199,7 +199,8 @@ import { MdSecurity } from 'react-icons/md'
 import { FaHospital, FaQuestion } from 'react-icons/fa6'
 import { FaFileAlt, FaUser, FaUserMd } from 'react-icons/fa'
 import loginWallpaper from '../assets/final.jpeg'
-import { supabase } from '../lib/supabase'
+import { auth, db, ref, get, query, orderByChild, equalTo } from '../lib/firebase'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -218,38 +219,31 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const userEmail = userCredential.user.email
 
-      if (error) {
-        alert(error.message)
-        setLoading(false)
-        return
+      // Query internal_users using our emulated get/query
+      const userQuery = query(ref(db, 'internal_users'), orderByChild('email'), equalTo(userEmail))
+      const userSnap = await get(userQuery)
+      
+      let internalUser = null
+      if (userSnap.exists()) {
+        const val = userSnap.val()
+        internalUser = Object.values(val).find((u: any) => u.email === userEmail && u.is_active === true)
       }
 
-      const userEmail = data.user.email
-
-      const { data: internalUser, error: dbError } = await supabase
-        .from('internal_users')
-        .select('*')
-        .eq('email', userEmail)
-        .eq('is_active', true)
-        .single()
-
-      if (dbError || !internalUser) {
+      if (!internalUser) {
         alert('No portal access')
-        await supabase.auth.signOut()
+        await signOut(auth)
         setLoading(false)
         return
       }
 
       router.push('/dashboard')
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err)
-      alert("An unexpected error occurred.")
+      alert(err.message || "An unexpected error occurred.")
       setLoading(false)
     }
   }

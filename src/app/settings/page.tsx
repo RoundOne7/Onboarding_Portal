@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { auth, db } from '../../lib/firebase'
-import { ref, onValue, update, get, set, push } from 'firebase/database'
+import { auth, db, ref, onValue, update, get, set, push } from '../../lib/firebase'
 import { 
     FiUser, FiBell, FiShield, FiSave, FiSettings, 
     FiUsers, FiActivity, FiPlus, FiClock

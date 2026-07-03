@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { auth, db, storage } from '../../../lib/firebase'
-import { ref as dbRef, push, get, query as dbQuery, orderByChild, equalTo } from 'firebase/database'
+import { auth, db, storage, ref as dbRef, push, get, query as dbQuery, orderByChild, equalTo } from '../../../lib/firebase'
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import { FiUploadCloud } from 'react-icons/fi'

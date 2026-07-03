@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { auth, db } from '../../lib/firebase'
+import { auth, db, ref, get, set, push, query, orderByChild, equalTo } from '../../lib/firebase'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { ref, get, set, push, query, orderByChild, equalTo } from 'firebase/database'
 import Link from 'next/link'
 
 export default function SeedPage() {
@@ -75,7 +74,32 @@ export default function SeedPage() {
 
             // 4. Seed Specializations
             log('Seeding specializations list...')
-            const specializations = ['Cardiology', 'Dermatology', 'Pediatrics', 'General Medicine', 'Orthopedics', 'Neurology', 'Oncology']
+            const specializations = [
+                'Veterinary',
+                'Eye Specialist',
+                'Brain and Nerves',
+                'Diet & Nutrition',
+                'Mental Wellness',
+                'Cancer',
+                'Women\'s Health',
+                'Skin & Hair',
+                'Diabetes Management',
+                'Physiotherapy',
+                'Heart',
+                'Dental Care',
+                'General Surgery',
+                'Kidney Issue',
+                'Digestive Issues',
+                'Ear,Nose,Throat',
+                'Urinary Issue',
+                'General Physician',
+                'Lungs and Breathing',
+                'Ayurveda',
+                'Bone & Joints',
+                'Homeopathy',
+                'Child Specialist',
+                'Sexual Health'
+            ]
             const qSpec = await get(ref(db, 'specializations'))
             if (!qSpec.exists() || forceOverwrite) {
                 if (forceOverwrite) {

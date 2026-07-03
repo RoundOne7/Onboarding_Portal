@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from './Sidebar'
-import { auth, db } from '../../lib/firebase'
+import { auth, db, ref, push, get, query, orderByChild, equalTo } from '../../lib/firebase'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import { ref, push, get, query, orderByChild, equalTo } from 'firebase/database'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 

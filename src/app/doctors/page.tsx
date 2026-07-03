@@ -3,8 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
-import { auth, db } from '../../lib/firebase'
-import { ref, onValue, update } from 'firebase/database'
+import { auth, db, ref, onValue, update } from '../../lib/firebase'
 import { useRouter } from 'next/navigation'
 import {
   FaPlus,

@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { auth, db } from '../../../lib/firebase'
-import { ref, onValue, update, get, query, orderByChild, equalTo, push } from 'firebase/database'
+import { auth, db, ref, onValue, update, get, query, orderByChild, equalTo, push } from '../../../lib/firebase'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import {
   FaCheckCircle,

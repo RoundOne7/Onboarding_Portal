@@ -8,8 +8,7 @@ import {
 import { useSearchParams } from 'next/navigation'
 
 import DashboardLayout from '../../../components/layout/DashboardLayout'
-import { auth, db } from '../../../lib/firebase'
-import { ref, get, update, query, orderByChild, equalTo } from 'firebase/database'
+import { auth, db, ref, get, update, query, orderByChild, equalTo } from '../../../lib/firebase'
 
 function SlotsContent() {
     const searchParams = useSearchParams()

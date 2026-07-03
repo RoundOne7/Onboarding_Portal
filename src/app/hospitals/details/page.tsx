@@ -2,8 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { auth, db } from '../../../lib/firebase'
-import { ref, onValue, update, get, query, orderByChild, equalTo } from 'firebase/database'
+import { auth, db, ref, onValue, update, get, query, orderByChild, equalTo } from '../../../lib/firebase'
 import DashboardLayout from '../../../components/layout/DashboardLayout'
 import Link from 'next/link'
 import {
