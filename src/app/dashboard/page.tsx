@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
-import { auth, db, ref, onValue } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue } from 'firebase/database'
 import {
   FaUserMd,
   FaHospital,
@@ -182,6 +183,7 @@ return (
           variants={rowVariants}
           whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
           className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex items-center justify-between group cursor-pointer transition-all duration-300"
+          onClick={() => window.location.href = '/doctors'}
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#1B60E0] flex items-center justify-center text-2xl group-hover:bg-[#1B60E0] group-hover:text-white transition-colors duration-300">
@@ -213,6 +215,7 @@ return (
           variants={rowVariants}
           whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
           className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex items-center justify-between group cursor-pointer transition-all duration-300"
+          onClick={() => window.location.href = '/hospitals'}
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-50 text-[#66BF36] flex items-center justify-center text-2xl group-hover:bg-[#66BF36] group-hover:text-white transition-colors duration-300">
@@ -244,6 +247,7 @@ return (
           variants={rowVariants}
           whileHover={{ y: -4, boxShadow: "var(--shadow-premium-hover)" }}
           className="bg-white border border-[#EAEEF6] rounded-2xl p-6 shadow-premium flex items-center justify-between group cursor-pointer transition-all duration-300"
+          onClick={() => window.location.href = '/hospitals'}
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-2xl group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
@@ -400,7 +404,7 @@ return (
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="mt-40 flex items-center justify-between border-t border-[#EAEEF6] pt-5 text-xs text-[#2B3E64] font-semibold">
+      <footer className="mt-18 flex items-center justify-between border-t border-[#EAEEF6] pt-5 text-xs text-[#2B3E64] font-semibold">
         <p>© 2026 QuickCheck. All rights reserved.</p>
         <div className="flex items-center gap-3">
           <button
