@@ -1,62 +1,72 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null",
-    "internal_users": {
-      ".read": "true",
-      ".write": "true",
-      ".indexOn": ["email"]
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'hospital_admin')"
+      }
     },
-    "audit_logs": {
-      ".read": "true",
-      ".write": "true",
-      ".indexOn": ["affected_id"]
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).exists())",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).exists())"
+      }
+    },
+    "patients": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "appointments": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "queue_entries": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "hospitals": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "doctors": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     },
     "doctor_schedules": {
-      ".read": "true",
-      ".write": "true",
+      ".read": "auth != null",
+      ".write": "auth != null",
       ".indexOn": ["doctor_id"]
     },
     "appointment_slots": {
-      ".read": "true",
-      ".write": "true",
+      ".read": "auth != null",
+      ".write": "auth != null",
       ".indexOn": ["doctor_id"]
     },
-    "settings": {
-      ".read": "true",
-      ".write": "true"
-    },
     "qualifications": {
-      ".read": "true",
-      ".write": "true"
+      ".read": "auth != null",
+      ".write": "auth != null"
     },
     "specializations": {
-      ".read": "true",
-      ".write": "true"
+      ".read": "auth != null",
+      ".write": "auth != null"
     },
-    "hospitals": {
-      ".read": "true",
-      ".write": "true"
+    "internal_users": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["email"]
     },
-    "doctors": {
-      ".read": "true",
-      ".write": "true"
+    "audit_logs": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["affected_id"]
     },
-    "appointments": {
-      ".read": "true",
-      ".write": "true"
-    },
-    "patients": {
-      ".read": "true",
-      ".write": "true"
-    },
-    "profiles": {
-      ".read": "true",
-      ".write": "true"
+    "settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     },
     "tickets": {
-      ".read": "true",
-      ".write": "true"
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }
