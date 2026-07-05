@@ -324,14 +324,14 @@ export default function LoginPage() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
                         <FiMail size={18} />
                       </div>
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value.slice(0, 20))}
                         disabled={loading}
-                        placeholder="admin@quickcheck.com" 
-                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50/90 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 font-semibold text-slate-800"
-                        required
+                        maxLength={20}
+                        placeholder="admin@quickcheck.com"
+                        className="w-full pl-11 pr-4 py-3 bg-slate-50/50 hover:bg-slate-50/90 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                       />
                     </div>
                   </div>
@@ -352,14 +352,14 @@ export default function LoginPage() {
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
                         <FiLock size={18} />
                       </div>
-                      <input 
-                        type={showPassword ? "text" : "password"} 
+                      <input
+                        type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => setPassword(e.target.value.slice(0, 20))}
                         disabled={loading}
-                        placeholder="••••••••" 
-                        className="w-full pl-11 pr-10 py-3 bg-slate-50/50 hover:bg-slate-50/90 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 font-semibold text-slate-800"
-                        required
+                        maxLength={20}
+                        placeholder="••••••••"
+                        className="w-full pl-11 pr-10 py-3 bg-slate-50/50 hover:bg-slate-50/90 focus:bg-white border border-slate-200/80 focus:border-blue-500 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                       />
                       <button
                         type="button"
