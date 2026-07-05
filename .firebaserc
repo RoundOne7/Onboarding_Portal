@@ -1,0 +1,23 @@
+{
+  "projects": {
+    "default": "quiick-check"
+  },
+  "targets": {
+    "quiick-check": {
+      "hosting": {
+        "portal": [
+          "quiick-check"
+        ],
+        "booking": [
+          "quiick-check-booking"
+        ],
+        "doctor": [
+          "quiick-check-doctor"
+        ],
+        "desk": [
+          "quiick-check-desk"
+        ]
+      }
+    }
+  }
+}
