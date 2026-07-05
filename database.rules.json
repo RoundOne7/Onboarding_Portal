@@ -46,6 +46,14 @@
       ".read": "true",
       ".write": "true"
     },
+    "patients": {
+      ".read": "true",
+      ".write": "true"
+    },
+    "profiles": {
+      ".read": "true",
+      ".write": "true"
+    },
     "tickets": {
       ".read": "true",
       ".write": "true"
