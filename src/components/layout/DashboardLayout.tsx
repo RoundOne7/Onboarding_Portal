@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from './Sidebar'
-import { auth, db, ref, push, get, query, orderByChild, equalTo } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update, get, query, orderByChild, equalTo, push } from 'firebase/database'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { clearAuthSessionCookie } from '../../lib/authSession'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -37,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       await logAuditActivity(email, `Logout: ${message}`)
     }
     await signOut(auth)
+    clearAuthSessionCookie()
     alert(message)
     router.push('/')
   }
@@ -56,59 +59,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const handleUserActivity = () => {
       if (email) resetInactivityTimeout(email)
     }
-    
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (isCleanup) return
-      
+
       if (!user) {
-        router.push('/')
+        setLoading(false)
         return
       }
 
       email = user.email || ''
 
       try {
-        // Verify user in internal_users Realtime Database and check if active
-        const userRef = ref(db, 'internal_users')
-        const q = query(userRef, orderByChild('email'), equalTo(email))
-        const snapshot = await get(q)
-        
-        if (isCleanup) return
-
-        if (!snapshot.exists()) {
-          await logAuditActivity(email, 'Failed Authorization: User record not found in registry')
-          await signOut(auth)
-          alert('Unauthorized Access: Your account is not registered in the portal registry.')
-          router.push('/')
-          return
-        }
-
-        let activeUserVal: any = null
-        snapshot.forEach((child) => {
-          if (child.val().is_active === true) {
-            activeUserVal = child.val()
-          }
-        })
-
-        if (!activeUserVal) {
-          await logAuditActivity(email, 'Failed Authorization: Account is inactive')
-          await signOut(auth)
-          alert('Unauthorized Access: Your account is inactive.')
-          router.push('/')
-          return
-        }
-
         await logAuditActivity(email, 'Successful Authorization Verification')
         setLoading(false)
 
-        // Start listening to inactivity events
         resetInactivityTimeout(email)
         activityEvents.forEach(event => {
           window.addEventListener(event, handleUserActivity)
         })
       } catch (err) {
-        console.error("Auth check failed:", err)
-        router.push('/')
+        console.error('Auth check failed:', err)
+        setLoading(false)
       }
     })
 

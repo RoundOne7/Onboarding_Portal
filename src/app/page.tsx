@@ -12,7 +12,7 @@ import { FaFileAlt, FaUser, FaUserMd } from 'react-icons/fa'
 import loginWallpaper from '../assets/final.jpeg'  
 // import { supabase } from '../lib/supabase'
 import { auth, db } from '../lib/firebase'
-import { ref, get,query, orderByChild, equalTo } from 'firebase/database'
+import { ref, get,query, orderByChild, equalTo, push, set } from 'firebase/database'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -38,20 +38,56 @@ export default function LoginPage() {
   const [supportLoading, setSupportLoading] = useState(false)
   const [supportSuccess, setSupportSuccess] = useState(false)
 
-  const handleSupportSubmit = (e: React.FormEvent) => {
+  // const handleSupportSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   setSupportLoading(true)
+  //   setTimeout(() => {
+  //     setSupportLoading(false)
+  //     setSupportSuccess(true)
+  //     setSupportEmail('')
+  //     setSupportSubject('')
+  //     setSupportMessage('')
+  //     setTimeout(() => {
+  //       setSupportSuccess(false)
+  //       setShowSupportModal(false)
+  //     }, 2500)
+  //   }, 1500)
+  // }
+
+  const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
     setSupportLoading(true)
-    setTimeout(() => {
+
+    try {
+      // Create a new support ticket
+      const supportRef = push(ref(db, "support_requests"))
+
+      await set(supportRef, {
+        email: supportEmail,
+        subject: supportSubject,
+        message: supportMessage,
+        status: "Pending",
+        createdAt: Date.now()
+      })
+
       setSupportLoading(false)
       setSupportSuccess(true)
-      setSupportEmail('')
-      setSupportSubject('')
-      setSupportMessage('')
+
+      // Clear form
+      setSupportEmail("")
+      setSupportSubject("")
+      setSupportMessage("")
+
       setTimeout(() => {
         setSupportSuccess(false)
         setShowSupportModal(false)
       }, 2500)
-    }, 1500)
+
+    } catch (error: any) {
+        console.error(error.code)
+        console.error(error.message)
+      }
   }
 
   // Auth States
@@ -59,13 +95,38 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   setRequestLoading(true)
+  //   setTimeout(() => {
+  //     setRequestLoading(false)
+  //     setViewMode('request_success')
+  //   }, 1200)
+  // }
+
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setRequestLoading(true)
-    setTimeout(() => {
+  e.preventDefault()
+
+  setRequestLoading(true)
+
+    try {
+      // Create a new request
+      const requestRef = push(ref(db, "password_reset_requests"))
+
+      await set(requestRef, {
+        email: forgotEmail,
+        status: "Pending",
+        createdAt: Date.now()
+      })
+
       setRequestLoading(false)
-      setViewMode('request_success')
-    }, 1200)
+      setViewMode("request_success")
+
+    } catch (error) {
+      console.error("Forgot Password Error:", error)
+      alert("Unable to submit your request. Please try again.")
+      setRequestLoading(false)
+    }
   }
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -104,8 +165,7 @@ export default function LoginPage() {
         return
       }
 
-      // Success! Route to dashboard
-      router.push('/dashboard')
+      router.replace('/dashboard')
 
     } catch (error: any) {
       console.error("Login Error:", error)
