@@ -77,5 +77,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  return <>{children}</>
+  const isPublicRoute = PUBLIC_PATHS.includes(pathname);
+
+  // Prevent protected pages from rendering after logout
+  if (!isPublicRoute && !auth.currentUser) {
+    return null;
+  }
+
+  return <>{children}</>;
 }

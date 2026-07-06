@@ -10,15 +10,23 @@ import { auth } from '../../lib/firebase'
 import { signOut } from 'firebase/auth'
 import { TbFile } from 'react-icons/tb'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 
 export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean; setIsCollapsed: (collapsed: boolean) => void }) {
   const pathname = usePathname()
   
   const isActive = (path: string) => pathname === path
 
+  const router = useRouter();
+
   async function logout() {
-    await signOut(auth)
-    window.location.href = '/'
+    try {
+      await signOut(auth);
+
+      router.replace("/");
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const navItems = [
