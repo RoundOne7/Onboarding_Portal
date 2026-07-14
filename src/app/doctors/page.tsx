@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import Link from 'next/link'
-import { auth, db, ref, onValue, update } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, update, remove } from 'firebase/database'
 import { useRouter } from 'next/navigation'
 import {
   FaPlus,
@@ -18,6 +19,7 @@ import {
   FaTrash
 } from 'react-icons/fa'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FiCheckCircle } from 'react-icons/fi'
 
 export default function DoctorsPage() {
   const router = useRouter()
@@ -106,6 +108,23 @@ export default function DoctorsPage() {
       Rejected: 0,
     }
   }, [doctors])
+
+  const deleteDoctor = async (doctor: any) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete Dr. ${doctor.name}?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await remove(ref(db, `doctors/${doctor.id}`));
+
+      alert("Doctor deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting doctor:", error);
+      alert("Failed to delete doctor.");
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -287,12 +306,19 @@ export default function DoctorsPage() {
                               onClick={() => toggleDoctorStatus(doctor)}
                               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
                                 doctor.is_active 
-                                  ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' 
-                                  : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                                  ? 'bg-red-50 text-green-500 hover:bg-green-500 hover:text-white' 
+                                  : 'bg-green-50 text-yellow-300 hover:bg-yellow-300 hover:text-white'
                               }`} 
                               title={doctor.is_active ? "Deactivate" : "Activate"}
                             >
-                              <FaTrash size={12} />
+                              <FiCheckCircle size={12} />
+                            </button>
+                            <button
+                              onClick={() => deleteDoctor(doctor)}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer bg-red-50 text-red-500 hover:bg-red-500 hover:text-white`}
+                                  title="Delete Doctor"
+                            >
+                            <FaTrash size={12} />
                             </button>
                           </div>
                         </td>
