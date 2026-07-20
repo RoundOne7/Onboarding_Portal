@@ -163,11 +163,11 @@ return (
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white uppercase shadow-sm">
             {userName.charAt(0)}
           </div>
-          <div>
-            <p className="font-bold text-sm text-[#0B1528]">{userName}</p>
-            <p className="text-xs text-[#2B3E64] font-semibold">Super Admin</p>
+          <div className="flex flex-col items-center w-15">
+            <p className="font-bold text-lg text-[#0B1528]">{userName}</p>
+            {/* <p className="text-xs text-[#2B3E64] font-semibold">Super Admin</p> */}
           </div>
-          <span className="text-[#2B3E64] text-xs font-bold ml-1">⌄</span>
+          {/* <span className="text-[#2B3E64] text-xs font-bold ml-1">⌄</span> */}
         </motion.div>
       </motion.header>
 

@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { auth, db } from '../../lib/firebase'
-import { ref, onValue, update } from 'firebase/database'
+import { ref, onValue, update, remove } from 'firebase/database'
 import {FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaHospitalSymbol} from 'react-icons/fa'
 import { useRouter } from 'next/navigation'
 import { MdOutlineLocalHospital } from 'react-icons/md'
 import { motion, AnimatePresence } from 'framer-motion'
+import { FiCheckCircle } from 'react-icons/fi'
 
 export default function HospitalsPage() {
     const router = useRouter()
@@ -70,6 +71,23 @@ export default function HospitalsPage() {
             year: 'numeric'
         })
     }
+
+    const deleteHospital = async (hospital: any) => {
+        const confirmDelete = window.confirm(
+          `Are you sure you want to delete ${hospital.name}?`
+        );
+    
+        if (!confirmDelete) return;
+    
+        try {
+          await remove(ref(db, `hospitals/${hospital.id}`));
+    
+          alert("Hospital deleted successfully.");
+        } catch (error) {
+          console.error("Error deleting hospital:", error);
+          alert("Failed to delete hospital.");
+        }
+      };
 
     // Filter logic handling both Search and Tabs
     const filteredHospitals = useMemo(() => {
@@ -293,13 +311,20 @@ export default function HospitalsPage() {
                                                             onClick={() => toggleHospitalStatus(hospital)}
                                                             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
                                                                 hospital.is_active 
-                                                                    ? 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white' 
-                                                                    : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                                                                   ? 'bg-red-50 text-green-500 hover:bg-green-500 hover:text-white' 
+                                                                   : 'bg-green-50 text-yellow-300 hover:bg-yellow-300 hover:text-white'
                                                             }`} 
                                                             title={hospital.is_active ? "Deactivate" : "Activate"}
                                                         >
-                                                            <FaTrash size={12} />
+                                                            <FiCheckCircle size={12} />
                                                         </button>
+                                                        <button
+                                                            onClick={() => deleteHospital(hospital)}
+                                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer bg-red-50 text-red-500 hover:bg-red-500 hover:text-white`}
+                                                            title="Delete Hospital"
+                                                            >
+                                                            <FaTrash size={12} />
+                                                            </button>
                                                     </div>
                                                 </td>
                                             </motion.tr>

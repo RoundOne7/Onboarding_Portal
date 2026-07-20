@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { auth, db, ref, onValue } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue } from 'firebase/database'
 import { FaArrowUp, FaArrowDown, FaQuestion } from 'react-icons/fa'
 import {
   AreaChart,
@@ -348,4 +349,4 @@ export default function ReportsPage() {
             </main>
         </DashboardLayout>
     )
-}
+}

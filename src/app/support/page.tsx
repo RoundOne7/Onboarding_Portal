@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import { auth, db, ref, onValue, push } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, onValue, push } from 'firebase/database'
 import { FiMail, FiPhone, FiMessageCircle, FiSend, FiCheckCircle, FiHeadphones, FiAlertCircle } from 'react-icons/fi'
 import { motion } from 'framer-motion'
 

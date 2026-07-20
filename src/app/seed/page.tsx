@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { auth, db, ref, get, set, push, query, orderByChild, equalTo } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
+import { ref, push, set, get, query, orderByChild, equalTo } from 'firebase/database'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import Link from 'next/link'
 
